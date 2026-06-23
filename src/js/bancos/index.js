@@ -187,6 +187,8 @@ const eliminarApi = async (e) => {
 };
 
 // ── Asignar valores al editar ──────────────────────────────
+// El modal se abre manualmente para evitar que show.bs.modal
+// dispare resetearModal y pise los valores asignados
 const asignarValores = (e) => {
   const { codigo, nombre } = e.currentTarget.dataset;
   formBanco.ban_id.value     = codigo;
@@ -199,7 +201,11 @@ const asignarValores = (e) => {
   btnModificar.disabled      = false;
   spanLoader.classList.add("d-none");
   spanLoaderModificar.classList.add("d-none");
+
+  // Usamos el evento interno para saltarnos resetearModal
+  modalElement.removeEventListener("show.bs.modal", resetearModal);
   modalBSBanco.show();
+  modalElement.addEventListener("show.bs.modal", resetearModal);
 };
 
 // ── Resetear modal ─────────────────────────────────────────
