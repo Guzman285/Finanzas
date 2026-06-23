@@ -27,6 +27,7 @@ class CuentaController
                     c.cta_tipo,
                     c.cta_saldo,
                     c.cta_banco_id,
+                    c.cta_numero,
                     b.ban_nombre AS banco_nombre
                 FROM cuentas c
                 LEFT JOIN bancos b ON c.cta_banco_id = b.ban_id

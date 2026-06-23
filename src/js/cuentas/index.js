@@ -287,6 +287,10 @@ const asignarValores = async (e) => {
   btnModificar.disabled      = false;
   spanLoader.classList.add("d-none");
   spanLoaderModificar.classList.add("d-none");
+
+  modalElement.removeEventListener("show.bs.modal", resetearModal);
+  modalBSCuenta.show();
+  modalElement.addEventListener("show.bs.modal", resetearModal);
 };
 
 // ── Resetear modal ─────────────────────────────────────────
