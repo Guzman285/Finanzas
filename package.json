@@ -19,6 +19,7 @@
     "mini-css-extract-plugin": "^2.6.1",
     "postcss-loader": "~3.0.0",
     "precss": "^3.0.0",
+    "sass": "^1.77.8",
     "sass-loader": "^13.0.2",
     "style-loader": "^3.3.1",
     "terser": "^5.3.8",
@@ -32,7 +33,6 @@
     "fullcalendar": "^5.11.3",
     "jquery": "^3.6.1",
     "leaflet": "^1.9.2",
-    "sass": "^1.75.0",
     "sweetalert2": "^11.4.38"
   }
 }
