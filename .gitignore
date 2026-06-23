@@ -7,3 +7,4 @@ temp
 storage
 .env
 includes/.env
+.sql

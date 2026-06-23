@@ -42,3 +42,13 @@ export const confirmacion = (mensaje, icono, textoBoton) => {
         return result.isConfirmed;
     });
 }
+
+export const mostrarLoader = (span, btn) => {
+    span.classList.remove('d-none');
+    btn.disabled = true;
+};
+
+export const ocultarLoader = (span, btn) => {
+    span.classList.add('d-none');
+    btn.disabled = false;
+};
