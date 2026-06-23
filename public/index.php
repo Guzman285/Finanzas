@@ -6,6 +6,7 @@ use Controllers\AppController;
 use Controllers\CuentaController;
 use Controllers\BancoController;
 use Controllers\CategoriaController;
+use Controllers\GastoFijoController;
 
 $router = new Router();
 $router->setBaseURL('/' . $_ENV['APP_NAME']);
@@ -33,6 +34,14 @@ $router->get('/API/categorias/buscar',         [CategoriaController::class, 'bus
 $router->post('/API/categorias/guardar',       [CategoriaController::class, 'guardarAPI']);
 $router->post('/API/categorias/modificar',     [CategoriaController::class, 'modificarAPI']);
 $router->post('/API/categorias/eliminar',      [CategoriaController::class, 'eliminarAPI']);
+
+// Gastos Fijos
+$router->get('/gastos_fijos',                  [GastoFijoController::class, 'index']);
+$router->get('/API/gastos_fijos/buscar',       [GastoFijoController::class, 'buscarAPI']);
+$router->post('/API/gastos_fijos/guardar',     [GastoFijoController::class, 'guardarAPI']);
+$router->post('/API/gastos_fijos/modificar',   [GastoFijoController::class, 'modificarAPI']);
+$router->post('/API/gastos_fijos/eliminar',    [GastoFijoController::class, 'eliminarAPI']);
+$router->post('/API/gastos_fijos/pagar',       [GastoFijoController::class, 'pagarAPI']);
 
 // Comprueba y valida las rutas
 $router->comprobarRutas();

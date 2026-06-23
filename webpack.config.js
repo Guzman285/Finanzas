@@ -8,6 +8,7 @@ module.exports = {
     "js/cuentas/index": "./src/js/cuentas/index.js",
     "js/bancos/index": "./src/js/bancos/index.js",
     "js/categorias/index": "./src/js/categorias/index.js",
+    "js/gastos_fijos/index": "./src/js/gastos_fijos/index.js",
   },
   output: {
     filename: "[name].js",
