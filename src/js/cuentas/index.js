@@ -1,69 +1,72 @@
-import { Modal } from 'bootstrap';
-import DataTable from 'datatables.net-bs5';
-import { lenguaje } from './../lenguaje';
-import { Toast, confirmacion, validarFormulario } from './../funciones';
+import { Modal } from "bootstrap";
+import DataTable from "datatables.net-bs5";
+import { lenguaje } from "./../lenguaje";
+import { Toast, confirmacion, validarFormulario } from "./../funciones";
 
-const formCuenta        = document.querySelector('#formCuenta');
-const modalElement      = document.querySelector('#modalCuenta');
-const modalBSCuenta     = new Modal(modalElement);
-const spanLoader        = document.getElementById('spanLoader');
-const btnCrear          = document.getElementById('btnCrear');
-const spanLoaderModificar = document.getElementById('spanLoaderModificar');
-const btnModificar      = document.getElementById('btnModificar');
-const modalTitleId      = document.getElementById('modalTitleId');
-const btnNuevo          = document.getElementById('btnNuevo');
-const selectTipo        = document.getElementById('cta_tipo');
-const divBanco          = document.getElementById('divBanco');
-const selectBanco       = document.getElementById('cta_banco_id');
+const formCuenta = document.querySelector("#formCuenta");
+const modalElement = document.querySelector("#modalCuenta");
+const modalBSCuenta = new Modal(modalElement);
+const spanLoader = document.getElementById("spanLoader");
+const btnCrear = document.getElementById("btnCrear");
+const spanLoaderModificar = document.getElementById("spanLoaderModificar");
+const btnModificar = document.getElementById("btnModificar");
+const modalTitleId = document.getElementById("modalTitleId");
+const btnNuevo = document.getElementById("btnNuevo");
+const selectTipo = document.getElementById("cta_tipo");
+const divBanco = document.getElementById("divBanco");
+const selectBanco = document.getElementById("cta_banco_id");
 
-spanLoader.classList.add('d-none');
-spanLoaderModificar.classList.add('d-none');
-btnModificar.style.display = 'none';
+spanLoader.classList.add("d-none");
+spanLoaderModificar.classList.add("d-none");
+btnModificar.style.display = "none";
 btnModificar.disabled = true;
 
 // ── DataTable ──────────────────────────────────────────────
-let datatableCuentas = new DataTable('#datatableCuentas', {
-    language: lenguaje,
-    data: null,
-    columns: [
-        {
-            title: 'No.',
-            width: '2%',
-            render: (data, type, row, meta) => meta.row + 1
-        },
-        {
-            title: 'CUENTA',
-            data: 'cta_nombre',
-        },
-        {
-            title: 'TIPO',
-            data: 'cta_tipo',
-            render: (data) => {
-                const tipos = {
-                    banco:            '<span class="badge bg-primary">Banco</span>',
-                    efectivo:         '<span class="badge bg-success">Efectivo</span>',
-                    tarjeta_debito:   '<span class="badge bg-info text-dark">Débito</span>',
-                    tarjeta_credito:  '<span class="badge bg-warning text-dark">Crédito</span>',
-                };
-                return tipos[data] ?? data;
-            }
-        },
-        {
-            title: 'BANCO',
-            data: 'banco_nombre',
-            render: (data) => data ?? '—'
-        },
-        {
-            title: 'SALDO',
-            data: 'cta_saldo',
-            render: (data) => `Q ${parseFloat(data).toFixed(2)}`
-        },
-        {
-            title: 'Acciones',
-            data: 'cta_id',
-            width: '35%',
-            searchable: false,
-            render: (data, type, row) => `
+let datatableCuentas = new DataTable("#datatableCuentas", {
+  language: lenguaje,
+  data: null,
+  columns: [
+    {
+      title: "No.",
+      width: "2%",
+      render: (data, type, row, meta) => meta.row + 1,
+    },
+    {
+      title: "CUENTA",
+      data: "cta_nombre",
+    },
+    {
+      title: "TIPO",
+      data: "cta_tipo",
+      render: (data) => {
+        const tipos = {
+          monetaria: '<span class="badge bg-primary">Monetaria</span>',
+          ahorro: '<span class="badge bg-success">Ahorro</span>',
+          efectivo: '<span class="badge bg-secondary">Efectivo</span>',
+          tarjeta_debito:
+            '<span class="badge bg-info text-dark">T. Débito</span>',
+          tarjeta_credito:
+            '<span class="badge bg-warning text-dark">T. Crédito</span>',
+        };
+        return tipos[data] ?? data;
+      },
+    },
+    {
+      title: "BANCO",
+      data: "banco_nombre",
+      render: (data) => data ?? "—",
+    },
+    {
+      title: "SALDO",
+      data: "cta_saldo",
+      render: (data) => `Q ${parseFloat(data).toFixed(2)}`,
+    },
+    {
+      title: "Acciones",
+      data: "cta_id",
+      width: "35%",
+      searchable: false,
+      render: (data, type, row) => `
                 <div class='text-center'>
                     <button style='min-width:31px;max-width:32px;min-height:31px;max-height:32px'
                         data-bs-toggle='modal' data-bs-target='#modalCuenta'
@@ -82,216 +85,221 @@ let datatableCuentas = new DataTable('#datatableCuentas', {
                         title='Eliminar'>
                         <i class='fas fa-times fa-xs'></i>
                     </button>
-                </div>`
-        },
-    ]
+                </div>`,
+    },
+  ],
 });
 
 // ── Mostrar/ocultar select de banco según tipo ─────────────
-selectTipo.addEventListener('change', () => {
-    const tipo = selectTipo.value;
-    if (tipo === 'tarjeta_debito' || tipo === 'tarjeta_credito') {
-        divBanco.classList.remove('d-none');
-        cargarBancos();
-    } else {
-        divBanco.classList.add('d-none');
-        selectBanco.value = '';
-    }
+selectTipo.addEventListener("change", () => {
+  const tipo = selectTipo.value;
+  if (["tarjeta_debito", "tarjeta_credito"].includes(tipo)) {
+    divBanco.classList.remove("d-none");
+    cargarBancos();
+  } else {
+    divBanco.classList.add("d-none");
+    selectBanco.value = "";
+  }
 });
 
 // ── Cargar bancos en el select ─────────────────────────────
 const cargarBancos = async () => {
-    try {
-        const respuesta = await fetch(`${RUTA_APP}/API/cuentas/buscar`, {
-            headers: { 'X-Requested-With': 'fetch' }
-        });
-        const data = await respuesta.json();
-        if (data.codigo == 1) {
-            const bancos = data.datos.filter(c => c.cta_tipo === 'banco');
-            selectBanco.innerHTML = '<option value="">-- Selecciona banco --</option>';
-            bancos.forEach(b => {
-                selectBanco.innerHTML += `<option value="${b.cta_id}">${b.cta_nombre}</option>`;
-            });
-        }
-    } catch (error) {
-        console.log(error);
+  try {
+    const respuesta = await fetch(`${RUTA_APP}/API/cuentas/buscar`, {
+      headers: { "X-Requested-With": "fetch" },
+    });
+    const data = await respuesta.json();
+    if (data.codigo == 1) {
+      const bancos = data.datos.filter((c) => c.cta_tipo === "banco");
+      selectBanco.innerHTML =
+        '<option value="">-- Selecciona banco --</option>';
+      bancos.forEach((b) => {
+        selectBanco.innerHTML += `<option value="${b.cta_id}">${b.cta_nombre}</option>`;
+      });
     }
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 // ── Buscar ─────────────────────────────────────────────────
 const buscarApi = async () => {
-    try {
-        const respuesta = await fetch(`${RUTA_APP}/API/cuentas/buscar`, {
-            method: 'GET',
-            headers: { 'X-Requested-With': 'fetch' }
-        });
-        const data = await respuesta.json();
-        const { datos, mensaje, codigo } = data;
-        datatableCuentas.clear().draw();
-        if (codigo == 1) {
-            datatableCuentas.rows.add(datos).draw();
-        } else {
-            Toast.fire({ icon: 'info', title: mensaje });
-        }
-    } catch (error) {
-        console.log(error);
+  try {
+    const respuesta = await fetch(`${RUTA_APP}/API/cuentas/buscar`, {
+      method: "GET",
+      headers: { "X-Requested-With": "fetch" },
+    });
+    const data = await respuesta.json();
+    const { datos, mensaje, codigo } = data;
+    datatableCuentas.clear().draw();
+    if (codigo == 1) {
+      datatableCuentas.rows.add(datos).draw();
+    } else {
+      Toast.fire({ icon: "info", title: mensaje });
     }
+  } catch (error) {
+    console.log(error);
+  }
 };
 buscarApi();
 
 // ── Guardar ────────────────────────────────────────────────
-const guardarApi = async e => {
-    e.preventDefault();
-    spanLoader.classList.remove('d-none');
-    btnCrear.disabled = true;
+const guardarApi = async (e) => {
+  e.preventDefault();
+  spanLoader.classList.remove("d-none");
+  btnCrear.disabled = true;
 
-    if (!validarFormulario(formCuenta, ['cta_id', 'cta_banco_id'])) {
-        Toast.fire({ icon: 'warning', title: 'Revise la información ingresada' });
-        spanLoader.classList.add('d-none');
-        btnCrear.disabled = false;
-        return;
-    }
-
-    try {
-        const body = new FormData(formCuenta);
-        body.delete('cta_id');
-        const respuesta = await fetch(`${RUTA_APP}/API/cuentas/guardar`, {
-            method: 'POST',
-            body,
-            headers: { 'X-Requested-With': 'fetch' }
-        });
-        const data = await respuesta.json();
-        const { codigo, mensaje, detalle } = data;
-
-        if (codigo == 1) {
-            formCuenta.reset();
-            modalBSCuenta.hide();
-            buscarApi();
-        } else {
-            console.log(detalle);
-        }
-
-        Toast.fire({ icon: codigo == 1 ? 'success' : 'error', title: mensaje });
-    } catch (error) {
-        console.log(error);
-    }
-
-    spanLoader.classList.add('d-none');
+  if (!validarFormulario(formCuenta, ["cta_id", "cta_banco_id"])) {
+    Toast.fire({ icon: "warning", title: "Revise la información ingresada" });
+    spanLoader.classList.add("d-none");
     btnCrear.disabled = false;
+    return;
+  }
+
+  try {
+    const body = new FormData(formCuenta);
+    body.delete("cta_id");
+    const respuesta = await fetch(`${RUTA_APP}/API/cuentas/guardar`, {
+      method: "POST",
+      body,
+      headers: { "X-Requested-With": "fetch" },
+    });
+    const data = await respuesta.json();
+    const { codigo, mensaje, detalle } = data;
+
+    if (codigo == 1) {
+      formCuenta.reset();
+      modalBSCuenta.hide();
+      buscarApi();
+    } else {
+      console.log(detalle);
+    }
+
+    Toast.fire({ icon: codigo == 1 ? "success" : "error", title: mensaje });
+  } catch (error) {
+    console.log(error);
+  }
+
+  spanLoader.classList.add("d-none");
+  btnCrear.disabled = false;
 };
 
 // ── Modificar ──────────────────────────────────────────────
-const modificarApi = async e => {
-    e.preventDefault();
-    spanLoaderModificar.classList.remove('d-none');
-    btnModificar.disabled = true;
+const modificarApi = async (e) => {
+  e.preventDefault();
+  spanLoaderModificar.classList.remove("d-none");
+  btnModificar.disabled = true;
 
-    if (!validarFormulario(formCuenta)) {
-        Toast.fire({ icon: 'warning', title: 'Revise la información ingresada' });
-        spanLoaderModificar.classList.add('d-none');
-        btnModificar.disabled = false;
-        return;
-    }
-
-    try {
-        const body = new FormData(formCuenta);
-        const respuesta = await fetch(`${RUTA_APP}/API/cuentas/modificar`, {
-            method: 'POST',
-            body,
-            headers: { 'X-Requested-With': 'fetch' }
-        });
-        const data = await respuesta.json();
-        const { codigo, mensaje, detalle } = data;
-
-        if (codigo == 1) {
-            formCuenta.reset();
-            modalBSCuenta.hide();
-            buscarApi();
-        } else {
-            console.log(detalle);
-        }
-
-        Toast.fire({ icon: codigo == 1 ? 'success' : 'error', title: mensaje });
-    } catch (error) {
-        console.log(error);
-    }
-
-    spanLoaderModificar.classList.add('d-none');
+  if (!validarFormulario(formCuenta, ["cta_banco_id"])) {
+    Toast.fire({ icon: "warning", title: "Revise la información ingresada" });
+    spanLoaderModificar.classList.add("d-none");
     btnModificar.disabled = false;
+    return;
+  }
+
+  try {
+    const body = new FormData(formCuenta);
+    const respuesta = await fetch(`${RUTA_APP}/API/cuentas/modificar`, {
+      method: "POST",
+      body,
+      headers: { "X-Requested-With": "fetch" },
+    });
+    const data = await respuesta.json();
+    const { codigo, mensaje, detalle } = data;
+
+    if (codigo == 1) {
+      formCuenta.reset();
+      modalBSCuenta.hide();
+      buscarApi();
+    } else {
+      console.log(detalle);
+    }
+
+    Toast.fire({ icon: codigo == 1 ? "success" : "error", title: mensaje });
+  } catch (error) {
+    console.log(error);
+  }
+
+  spanLoaderModificar.classList.add("d-none");
+  btnModificar.disabled = false;
 };
 
 // ── Eliminar ───────────────────────────────────────────────
-const eliminarApi = async e => {
-    const { codigo } = e.currentTarget.dataset;
-    const confirm = await confirmacion('¿Está seguro que desea eliminar esta cuenta?', 'warning', 'Sí, eliminar');
-    if (!confirm) return;
+const eliminarApi = async (e) => {
+  const { codigo } = e.currentTarget.dataset;
+  const confirm = await confirmacion(
+    "¿Está seguro que desea eliminar esta cuenta?",
+    "warning",
+    "Sí, eliminar",
+  );
+  if (!confirm) return;
 
-    try {
-        const body = new FormData();
-        body.append('cta_id', codigo);
-        const respuesta = await fetch(`${RUTA_APP}/API/cuentas/eliminar`, {
-            method: 'POST',
-            body,
-            headers: { 'X-Requested-With': 'fetch' }
-        });
-        const data = await respuesta.json();
-        const { codigo: cod, mensaje, detalle } = data;
+  try {
+    const body = new FormData();
+    body.append("cta_id", codigo);
+    const respuesta = await fetch(`${RUTA_APP}/API/cuentas/eliminar`, {
+      method: "POST",
+      body,
+      headers: { "X-Requested-With": "fetch" },
+    });
+    const data = await respuesta.json();
+    const { codigo: cod, mensaje, detalle } = data;
 
-        if (cod == 1) {
-            formCuenta.reset();
-            buscarApi();
-        } else {
-            console.log(detalle);
-        }
-
-        Toast.fire({ icon: cod == 1 ? 'success' : 'error', title: mensaje });
-    } catch (error) {
-        console.log(error);
+    if (cod == 1) {
+      formCuenta.reset();
+      buscarApi();
+    } else {
+      console.log(detalle);
     }
+
+    Toast.fire({ icon: cod == 1 ? "success" : "error", title: mensaje });
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 // ── Asignar valores al editar ──────────────────────────────
-const asignarValores = async e => {
-    const { codigo, nombre, tipo, saldo, banco } = e.currentTarget.dataset;
-    formCuenta.cta_id.value     = codigo;
-    formCuenta.cta_nombre.value = nombre;
-    formCuenta.cta_saldo.value  = saldo;
-    formCuenta.cta_tipo.value   = tipo;
+const asignarValores = async (e) => {
+  const { codigo, nombre, tipo, saldo, banco } = e.currentTarget.dataset;
+  formCuenta.cta_id.value = codigo;
+  formCuenta.cta_nombre.value = nombre;
+  formCuenta.cta_saldo.value = saldo;
+  formCuenta.cta_tipo.value = tipo;
 
-    if (tipo === 'tarjeta_debito' || tipo === 'tarjeta_credito') {
-        divBanco.classList.remove('d-none');
-        await cargarBancos();
-        selectBanco.value = banco;
-    } else {
-        divBanco.classList.add('d-none');
-    }
+  if (["tarjeta_debito", "tarjeta_credito"].includes(tipo)) {
+    divBanco.classList.remove("d-none");
+    await cargarBancos();
+    selectBanco.value = banco;
+  } else {
+    divBanco.classList.add("d-none");
+  }
 
-    modalTitleId.textContent = 'Modificar cuenta';
-    btnCrear.style.display   = 'none';
-    btnModificar.style.display = '';
-    btnCrear.disabled        = true;
-    btnModificar.disabled    = false;
-    spanLoader.classList.add('d-none');
-    spanLoaderModificar.classList.add('d-none');
+  modalTitleId.textContent = "Modificar cuenta";
+  btnCrear.style.display = "none";
+  btnModificar.style.display = "";
+  btnCrear.disabled = true;
+  btnModificar.disabled = false;
+  spanLoader.classList.add("d-none");
+  spanLoaderModificar.classList.add("d-none");
 };
 
 // ── Resetear modal ─────────────────────────────────────────
 const resetearModal = () => {
-    modalTitleId.textContent   = 'Nueva Cuenta';
-    btnCrear.style.display     = '';
-    btnModificar.style.display = 'none';
-    btnCrear.disabled          = false;
-    btnModificar.disabled      = true;
-    spanLoader.classList.add('d-none');
-    spanLoaderModificar.classList.add('d-none');
-    divBanco.classList.add('d-none');
-    formCuenta.reset();
+  modalTitleId.textContent = "Nueva Cuenta";
+  btnCrear.style.display = "";
+  btnModificar.style.display = "none";
+  btnCrear.disabled = false;
+  btnModificar.disabled = true;
+  spanLoader.classList.add("d-none");
+  spanLoaderModificar.classList.add("d-none");
+  divBanco.classList.add("d-none");
+  formCuenta.reset();
 };
 
 // ── Eventos ────────────────────────────────────────────────
-formCuenta.addEventListener('submit', guardarApi);
-btnNuevo.addEventListener('click', () => modalBSCuenta.show());
-btnModificar.addEventListener('click', modificarApi);
-modalElement.addEventListener('show.bs.modal', resetearModal);
-datatableCuentas.on('click', '.editar', asignarValores);
-datatableCuentas.on('click', '.eliminar', eliminarApi);
+formCuenta.addEventListener("submit", guardarApi);
+btnNuevo.addEventListener("click", () => modalBSCuenta.show());
+btnModificar.addEventListener("click", modificarApi);
+modalElement.addEventListener("show.bs.modal", resetearModal);
+datatableCuentas.on("click", ".editar", asignarValores);
+datatableCuentas.on("click", ".eliminar", eliminarApi);
