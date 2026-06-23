@@ -14,9 +14,7 @@ class BancoController
         getHeadersApi();
         try {
             $bancos = Banco::fetchArray("
-                SELECT
-                    ban_id,
-                    ban_nombre
+                SELECT ban_id, ban_nombre
                 FROM bancos
                 WHERE ban_situacion = 1
                 ORDER BY ban_nombre
