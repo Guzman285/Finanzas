@@ -31,7 +31,12 @@
 
                     <li class="nav-item">
                         <a class="nav-link" href="/<?= $_ENV['APP_NAME'] ?>/cuentas">
-                            <i class="bi bi-bank me-2"></i>Cuentas
+                            <i class="bi bi-wallet me-2"></i>Cuentas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/<?= $_ENV['APP_NAME'] ?>/bancos">
+                            <i class="bi bi-bank2 me-2"></i>Bancos
                         </a>
                     </li>
 

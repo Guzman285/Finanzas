@@ -20,7 +20,11 @@ $router->post('/API/cuentas/modificar', [CuentaController::class, 'modificarAPI'
 $router->post('/API/cuentas/eliminar',  [CuentaController::class, 'eliminarAPI']);
 
 // Bancos
-$router->get('/API/bancos/buscar', [BancoController::class, 'buscarAPI']);
+$router->get('/bancos',                  [BancoController::class, 'index']);
+$router->get('/API/bancos/buscar',       [BancoController::class, 'buscarAPI']);
+$router->post('/API/bancos/guardar',     [BancoController::class, 'guardarAPI']);
+$router->post('/API/bancos/modificar',   [BancoController::class, 'modificarAPI']);
+$router->post('/API/bancos/eliminar',    [BancoController::class, 'eliminarAPI']);
 
 // Comprueba y valida las rutas
 $router->comprobarRutas();
