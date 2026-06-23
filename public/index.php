@@ -45,12 +45,15 @@ $router->post('/API/gastos_fijos/eliminar',  [GastoFijoController::class, 'elimi
 $router->post('/API/gastos_fijos/pagar',     [GastoFijoController::class, 'pagarAPI']);
 
 // Deudas
-$router->get('/deudas',                [DeudaController::class, 'index']);
-$router->get('/API/deudas/buscar',     [DeudaController::class, 'buscarAPI']);
-$router->post('/API/deudas/guardar',   [DeudaController::class, 'guardarAPI']);
-$router->post('/API/deudas/modificar', [DeudaController::class, 'modificarAPI']);
-$router->post('/API/deudas/eliminar',  [DeudaController::class, 'eliminarAPI']);
-$router->post('/API/deudas/abonar',    [DeudaController::class, 'abonarAPI']);
+$router->get('/deudas',                    [DeudaController::class, 'index']);
+$router->get('/API/deudas/buscar',         [DeudaController::class, 'buscarAPI']);
+$router->get('/API/deudas/movimientos',    [DeudaController::class, 'movimientosAPI']);
+$router->post('/API/deudas/guardar',       [DeudaController::class, 'guardarAPI']);
+$router->post('/API/deudas/modificar',     [DeudaController::class, 'modificarAPI']);
+$router->post('/API/deudas/eliminar',      [DeudaController::class, 'eliminarAPI']);
+$router->post('/API/deudas/pago',          [DeudaController::class, 'pagoAPI']);
+$router->post('/API/deudas/consumo',       [DeudaController::class, 'consumoAPI']);
+$router->post('/API/deudas/ajustar',       [DeudaController::class, 'ajustarAPI']);
 
 // Comprueba y valida las rutas
 $router->comprobarRutas();
