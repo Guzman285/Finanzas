@@ -36,7 +36,8 @@
                     <label for="cta_tipo" class="form-label">Tipo <span class="text-danger">*</span></label>
                     <select class="form-select form-select-sm" id="cta_tipo" name="cta_tipo">
                         <option value="">-- Selecciona --</option>
-                        <option value="banco">Banco</option>
+                        <option value="monetaria">Monetaria</option>
+                        <option value="ahorro">Ahorro</option>
                         <option value="efectivo">Efectivo</option>
                         <option value="tarjeta_debito">Tarjeta Débito</option>
                         <option value="tarjeta_credito">Tarjeta Crédito</option>

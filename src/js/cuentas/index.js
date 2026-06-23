@@ -31,10 +31,7 @@ let datatableCuentas = new DataTable("#datatableCuentas", {
       width: "2%",
       render: (data, type, row, meta) => meta.row + 1,
     },
-    {
-      title: "CUENTA",
-      data: "cta_nombre",
-    },
+    { title: "CUENTA", data: "cta_nombre" },
     {
       title: "TIPO",
       data: "cta_tipo",
@@ -67,33 +64,34 @@ let datatableCuentas = new DataTable("#datatableCuentas", {
       width: "35%",
       searchable: false,
       render: (data, type, row) => `
-                <div class='text-center'>
-                    <button style='min-width:31px;max-width:32px;min-height:31px;max-height:32px'
-                        data-bs-toggle='modal' data-bs-target='#modalCuenta'
-                        class="btn btn-warning btn-sm rounded-circle editar"
-                        title='Modificar'
-                        data-codigo='${data}'
-                        data-nombre='${row.cta_nombre}'
-                        data-tipo='${row.cta_tipo}'
-                        data-saldo='${row.cta_saldo}'
-                        data-banco='${row.cta_banco_id ?? ""}'>
-                        <i class='fas fa-file-pen fa-xs'></i>
-                    </button>
-                    <button style='min-width:31px;max-width:32px;min-height:31px;max-height:32px'
-                        class="btn btn-danger btn-sm rounded-circle eliminar"
-                        data-codigo='${data}'
-                        title='Eliminar'>
-                        <i class='fas fa-times fa-xs'></i>
-                    </button>
-                </div>`,
+        <div class='text-center'>
+          <button style='min-width:31px;max-width:32px;min-height:31px;max-height:32px'
+            data-bs-toggle='modal' data-bs-target='#modalCuenta'
+            class="btn btn-warning btn-sm rounded-circle editar"
+            title='Modificar'
+            data-codigo='${data}'
+            data-nombre='${row.cta_nombre}'
+            data-tipo='${row.cta_tipo}'
+            data-saldo='${row.cta_saldo}'
+            data-banco='${row.cta_banco_id ?? ""}'>
+            <i class='fas fa-file-pen fa-xs'></i>
+          </button>
+          <button style='min-width:31px;max-width:32px;min-height:31px;max-height:32px'
+            class="btn btn-danger btn-sm rounded-circle eliminar"
+            data-codigo='${data}'
+            title='Eliminar'>
+            <i class='fas fa-times fa-xs'></i>
+          </button>
+        </div>`,
     },
   ],
 });
 
 // ── Mostrar/ocultar select de banco según tipo ─────────────
+// FIX: efectivo no necesita banco, todos los demás sí (opcional)
 selectTipo.addEventListener("change", () => {
   const tipo = selectTipo.value;
-  if (["tarjeta_debito", "tarjeta_credito"].includes(tipo)) {
+  if (tipo !== "" && tipo !== "efectivo") {
     divBanco.classList.remove("d-none");
     cargarBancos();
   } else {
@@ -103,18 +101,18 @@ selectTipo.addEventListener("change", () => {
 });
 
 // ── Cargar bancos en el select ─────────────────────────────
+// FIX: ahora consume API/bancos/buscar y usa ban_id / ban_nombre
 const cargarBancos = async () => {
   try {
-    const respuesta = await fetch(`${RUTA_APP}/API/cuentas/buscar`, {
+    const respuesta = await fetch(`${RUTA_APP}/API/bancos/buscar`, {
       headers: { "X-Requested-With": "fetch" },
     });
     const data = await respuesta.json();
     if (data.codigo == 1) {
-      const bancos = data.datos.filter((c) => c.cta_tipo === "banco");
       selectBanco.innerHTML =
         '<option value="">-- Selecciona banco --</option>';
-      bancos.forEach((b) => {
-        selectBanco.innerHTML += `<option value="${b.cta_id}">${b.cta_nombre}</option>`;
+      data.datos.forEach((b) => {
+        selectBanco.innerHTML += `<option value="${b.ban_id}">${b.ban_nombre}</option>`;
       });
     }
   } catch (error) {
@@ -190,7 +188,12 @@ const modificarApi = async (e) => {
   spanLoaderModificar.classList.remove("d-none");
   btnModificar.disabled = true;
 
-  if (!validarFormulario(formCuenta, ["cta_banco_id"])) {
+  // FIX: banco es opcional para efectivo, pero requerido para tarjetas
+  const tipo = selectTipo.value;
+  const excluir = ["cta_id"];
+  if (tipo === "efectivo" || tipo === "") excluir.push("cta_banco_id");
+
+  if (!validarFormulario(formCuenta, excluir)) {
     Toast.fire({ icon: "warning", title: "Revise la información ingresada" });
     spanLoaderModificar.classList.add("d-none");
     btnModificar.disabled = false;
@@ -259,6 +262,7 @@ const eliminarApi = async (e) => {
 };
 
 // ── Asignar valores al editar ──────────────────────────────
+// FIX: muestra banco para todos los tipos excepto efectivo
 const asignarValores = async (e) => {
   const { codigo, nombre, tipo, saldo, banco } = e.currentTarget.dataset;
   formCuenta.cta_id.value = codigo;
@@ -266,12 +270,13 @@ const asignarValores = async (e) => {
   formCuenta.cta_saldo.value = saldo;
   formCuenta.cta_tipo.value = tipo;
 
-  if (["tarjeta_debito", "tarjeta_credito"].includes(tipo)) {
+  if (tipo !== "efectivo" && tipo !== "") {
     divBanco.classList.remove("d-none");
     await cargarBancos();
     selectBanco.value = banco;
   } else {
     divBanco.classList.add("d-none");
+    selectBanco.value = "";
   }
 
   modalTitleId.textContent = "Modificar cuenta";

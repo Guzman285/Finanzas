@@ -18,7 +18,7 @@ class Cuenta extends ActiveRecord
 
     public $cta_id        = null;
     public $cta_nombre    = '';
-    public $cta_tipo      = 'banco';
+    public $cta_tipo      = 'monetaria';
     public $cta_saldo     = 0.00;
     public $cta_banco_id  = null;
     public $cta_situacion = 1;
@@ -27,7 +27,7 @@ class Cuenta extends ActiveRecord
     {
         $this->cta_id        = $args['cta_id']        ?? null;
         $this->cta_nombre    = $args['cta_nombre']    ?? '';
-        $this->cta_tipo      = $args['cta_tipo']      ?? 'banco';
+        $this->cta_tipo      = $args['cta_tipo']      ?? 'monetaria';
         $this->cta_saldo     = $args['cta_saldo']     ?? 0.00;
         $this->cta_banco_id  = $args['cta_banco_id']  ?? null;
         $this->cta_situacion = $args['cta_situacion'] ?? 1;

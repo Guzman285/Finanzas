@@ -27,9 +27,9 @@ class CuentaController
                     c.cta_tipo,
                     c.cta_saldo,
                     c.cta_banco_id,
-                    b.cta_nombre AS banco_nombre
+                    b.ban_nombre AS banco_nombre
                 FROM cuentas c
-                LEFT JOIN cuentas b ON c.cta_banco_id = b.cta_id
+                LEFT JOIN bancos b ON c.cta_banco_id = b.ban_id
                 WHERE c.cta_situacion = 1
                 ORDER BY c.cta_id
             ");
@@ -52,6 +52,10 @@ class CuentaController
     {
         getHeadersApi();
         try {
+            if (empty($_POST['cta_nombre']) || empty($_POST['cta_tipo'])) {
+                echo json_encode(['codigo' => 0, 'mensaje' => 'Nombre y tipo son requeridos']);
+                return;
+            }
             $cuenta = new Cuenta($_POST);
             $cuenta->crear();
 
