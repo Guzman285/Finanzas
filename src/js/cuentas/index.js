@@ -74,13 +74,13 @@ let datatableCuentas = new DataTable("#datatableCuentas", {
             data-tipo='${row.cta_tipo}'
             data-saldo='${row.cta_saldo}'
             data-banco='${row.cta_banco_id ?? ""}'>
-            <i class='fas fa-file-pen fa-xs'></i>
+            <i class='bi bi-pencil-fill'></i>
           </button>
           <button style='min-width:31px;max-width:32px;min-height:31px;max-height:32px'
             class="btn btn-danger btn-sm rounded-circle eliminar"
             data-codigo='${data}'
             title='Eliminar'>
-            <i class='fas fa-times fa-xs'></i>
+            <i class='bi bi-x-lg'></i>
           </button>
         </div>`,
     },
@@ -88,7 +88,6 @@ let datatableCuentas = new DataTable("#datatableCuentas", {
 });
 
 // ── Mostrar/ocultar select de banco según tipo ─────────────
-// FIX: efectivo no necesita banco, todos los demás sí (opcional)
 selectTipo.addEventListener("change", () => {
   const tipo = selectTipo.value;
   if (tipo !== "" && tipo !== "efectivo") {
@@ -101,7 +100,6 @@ selectTipo.addEventListener("change", () => {
 });
 
 // ── Cargar bancos en el select ─────────────────────────────
-// FIX: ahora consume API/bancos/buscar y usa ban_id / ban_nombre
 const cargarBancos = async () => {
   try {
     const respuesta = await fetch(`${RUTA_APP}/API/bancos/buscar`, {
@@ -188,7 +186,6 @@ const modificarApi = async (e) => {
   spanLoaderModificar.classList.remove("d-none");
   btnModificar.disabled = true;
 
-  // FIX: banco es opcional para efectivo, pero requerido para tarjetas
   const tipo = selectTipo.value;
   const excluir = ["cta_id"];
   if (tipo === "efectivo" || tipo === "") excluir.push("cta_banco_id");
@@ -262,7 +259,6 @@ const eliminarApi = async (e) => {
 };
 
 // ── Asignar valores al editar ──────────────────────────────
-// FIX: muestra banco para todos los tipos excepto efectivo
 const asignarValores = async (e) => {
   const { codigo, nombre, tipo, saldo, banco } = e.currentTarget.dataset;
   formCuenta.cta_id.value = codigo;
