@@ -1,102 +1,116 @@
 <?php
 
-class CategoriaController extends AppController
+namespace Controllers;
+
+use MVC\Router;
+use Model\Categoria;
+use Exception;
+
+class CategoriaController
 {
-    private CategoriaModel $model;
-
-    public function __construct()
+    public static function index(Router $router)
     {
-        $this->model = new CategoriaModel();
+        $router->render('categorias/index', [
+            'titulo' => 'Control de Categorías'
+        ]);
     }
 
-    // GET /categorias
-    public function index(): void
+    public static function buscarAPI()
     {
-        $this->render('categorias/index', ['titulo' => 'Categorías']);
-    }
-
-    // GET /API/categorias/buscar
-    public function buscarAPI(): void
-    {
+        getHeadersApi();
         try {
-            $datos = $this->model->buscar();
-            $this->json([
+            $categorias = Categoria::fetchArray("
+                SELECT cat_id, cat_nombre, cat_tipo
+                FROM categorias
+                WHERE cat_situacion = 1
+                ORDER BY cat_tipo, cat_nombre
+            ");
+
+            echo json_encode([
                 'codigo'  => 1,
-                'mensaje' => 'OK',
-                'datos'   => $datos,
+                'mensaje' => count($categorias) . ' categoria/s encontradas',
+                'datos'   => $categorias
             ]);
         } catch (Exception $e) {
-            $this->json(['codigo' => 0, 'mensaje' => 'Error al buscar', 'detalle' => $e->getMessage()]);
+            echo json_encode([
+                'codigo'  => 0,
+                'mensaje' => 'Error al obtener categorías',
+                'detalle' => $e->getMessage()
+            ]);
         }
     }
 
-    // POST /API/categorias/guardar
-    public function guardarAPI(): void
+    public static function guardarAPI()
     {
+        getHeadersApi();
         try {
-            $data = [
-                'cat_nombre' => trim($_POST['cat_nombre'] ?? ''),
-                'cat_tipo'   => trim($_POST['cat_tipo']   ?? ''),
-            ];
-
-            if ($data['cat_nombre'] === '' || $data['cat_tipo'] === '') {
-                $this->json(['codigo' => 0, 'mensaje' => 'Datos incompletos']);
+            if (empty($_POST['cat_nombre']) || empty($_POST['cat_tipo'])) {
+                echo json_encode(['codigo' => 0, 'mensaje' => 'Datos incompletos']);
                 return;
             }
+            $categoria = new Categoria($_POST);
+            $categoria->crear();
 
-            $ok = $this->model->guardar($data);
-            $this->json([
-                'codigo'  => $ok ? 1 : 0,
-                'mensaje' => $ok ? 'Categoría guardada' : 'No se pudo guardar',
+            echo json_encode([
+                'codigo'  => 1,
+                'mensaje' => 'Categoría creada correctamente'
             ]);
         } catch (Exception $e) {
-            $this->json(['codigo' => 0, 'mensaje' => 'Error al guardar', 'detalle' => $e->getMessage()]);
+            echo json_encode([
+                'codigo'  => 0,
+                'mensaje' => 'Error al crear categoría',
+                'detalle' => $e->getMessage()
+            ]);
         }
     }
 
-    // POST /API/categorias/modificar
-    public function modificarAPI(): void
+    public static function modificarAPI()
     {
+        getHeadersApi();
         try {
-            $data = [
-                'cat_id'     => (int)($_POST['cat_id']     ?? 0),
-                'cat_nombre' => trim($_POST['cat_nombre'] ?? ''),
-                'cat_tipo'   => trim($_POST['cat_tipo']   ?? ''),
-            ];
-
-            if (!$data['cat_id'] || $data['cat_nombre'] === '' || $data['cat_tipo'] === '') {
-                $this->json(['codigo' => 0, 'mensaje' => 'Datos incompletos']);
+            $categoria = Categoria::find($_POST['cat_id']);
+            if (!$categoria) {
+                echo json_encode(['codigo' => 0, 'mensaje' => 'Categoría no encontrada']);
                 return;
             }
+            $categoria->sincronizar($_POST);
+            $categoria->actualizar();
 
-            $ok = $this->model->modificar($data);
-            $this->json([
-                'codigo'  => $ok ? 1 : 0,
-                'mensaje' => $ok ? 'Categoría modificada' : 'No se pudo modificar',
+            echo json_encode([
+                'codigo'  => 1,
+                'mensaje' => 'Categoría actualizada correctamente'
             ]);
         } catch (Exception $e) {
-            $this->json(['codigo' => 0, 'mensaje' => 'Error al modificar', 'detalle' => $e->getMessage()]);
+            echo json_encode([
+                'codigo'  => 0,
+                'mensaje' => 'Error al actualizar categoría',
+                'detalle' => $e->getMessage()
+            ]);
         }
     }
 
-    // POST /API/categorias/eliminar
-    public function eliminarAPI(): void
+    public static function eliminarAPI()
     {
+        getHeadersApi();
         try {
-            $data = ['cat_id' => (int)($_POST['cat_id'] ?? 0)];
-
-            if (!$data['cat_id']) {
-                $this->json(['codigo' => 0, 'mensaje' => 'ID inválido']);
+            $categoria = Categoria::find($_POST['cat_id']);
+            if (!$categoria) {
+                echo json_encode(['codigo' => 0, 'mensaje' => 'Categoría no encontrada']);
                 return;
             }
+            $categoria->sincronizar(['cat_situacion' => 0]);
+            $categoria->actualizar();
 
-            $ok = $this->model->eliminar($data);
-            $this->json([
-                'codigo'  => $ok ? 1 : 0,
-                'mensaje' => $ok ? 'Categoría eliminada' : 'No se pudo eliminar',
+            echo json_encode([
+                'codigo'  => 1,
+                'mensaje' => 'Categoría eliminada correctamente'
             ]);
         } catch (Exception $e) {
-            $this->json(['codigo' => 0, 'mensaje' => 'Error al eliminar', 'detalle' => $e->getMessage()]);
+            echo json_encode([
+                'codigo'  => 0,
+                'mensaje' => 'Error al eliminar categoría',
+                'detalle' => $e->getMessage()
+            ]);
         }
     }
 }
