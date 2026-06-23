@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 
 <head>
     <meta charset="UTF-8">
@@ -27,47 +27,46 @@
             <div class="collapse navbar-collapse" id="navbarToggler">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
-                    <!-- Inicio -->
                     <li class="nav-item">
                         <a class="nav-link" href="/<?= $_ENV['APP_NAME'] ?>/">
                             <i class="bi bi-house-fill me-1"></i>Inicio
                         </a>
                     </li>
 
-                    <!-- Cuentas -->
                     <li class="nav-item">
                         <a class="nav-link" href="/<?= $_ENV['APP_NAME'] ?>/cuentas">
                             <i class="bi bi-wallet me-1"></i>Cuentas
                         </a>
                     </li>
 
-                    <!-- Movimientos -->
                     <li class="nav-item">
                         <a class="nav-link" href="/<?= $_ENV['APP_NAME'] ?>/movimientos">
                             <i class="bi bi-arrow-left-right me-1"></i>Movimientos
                         </a>
                     </li>
 
-                    <!-- Gastos Fijos -->
                     <li class="nav-item">
                         <a class="nav-link" href="/<?= $_ENV['APP_NAME'] ?>/gastos_fijos">
                             <i class="bi bi-calendar-check me-1"></i>Gastos Fijos
                         </a>
                     </li>
 
-                    <!-- Deudas -->
                     <li class="nav-item">
                         <a class="nav-link" href="/<?= $_ENV['APP_NAME'] ?>/deudas">
                             <i class="bi bi-credit-card me-1"></i>Deudas
                         </a>
                     </li>
 
-                    <!-- Configuración (dropdown) -->
+                    <!-- Configuración dropdown — DEBE ser <li> dentro del <ul> -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle" href="#"
+                            id="dropdownConfiguracion"
+                            role="button"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
                             <i class="bi bi-gear me-1"></i>Configuración
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-dark">
+                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownConfiguracion">
                             <li>
                                 <a class="dropdown-item" href="/<?= $_ENV['APP_NAME'] ?>/bancos">
                                     <i class="bi bi-bank2 me-2"></i>Bancos

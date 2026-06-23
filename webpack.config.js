@@ -3,12 +3,13 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 module.exports = {
   mode: "development",
   entry: {
-    "js/app": "./src/js/app.js",
-    "js/inicio": "./src/js/inicio.js",
-    "js/cuentas/index": "./src/js/cuentas/index.js",
-    "js/bancos/index": "./src/js/bancos/index.js",
-    "js/categorias/index": "./src/js/categorias/index.js",
-    "js/gastos_fijos/index": "./src/js/gastos_fijos/index.js",
+    "js/app":               "./src/js/app.js",
+    "js/inicio":            "./src/js/inicio.js",
+    "js/cuentas/index":     "./src/js/cuentas/index.js",
+    "js/bancos/index":      "./src/js/bancos/index.js",
+    "js/categorias/index":  "./src/js/categorias/index.js",
+    "js/gastos_fijos/index":"./src/js/gastos_fijos/index.js",
+    "js/deudas/index":      "./src/js/deudas/index.js",
   },
   output: {
     filename: "[name].js",
@@ -24,9 +25,7 @@ module.exports = {
       {
         test: /\.(c|sc|sa)ss$/,
         use: [
-          {
-            loader: MiniCssExtractPlugin.loader,
-          },
+          { loader: MiniCssExtractPlugin.loader },
           "css-loader",
           "sass-loader",
         ],
