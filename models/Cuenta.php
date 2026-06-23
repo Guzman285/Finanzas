@@ -13,6 +13,7 @@ class Cuenta extends ActiveRecord
         'cta_tipo',
         'cta_saldo',
         'cta_banco_id',
+        'cta_numero',
         'cta_situacion'
     ];
 
@@ -21,6 +22,7 @@ class Cuenta extends ActiveRecord
     public $cta_tipo      = 'monetaria';
     public $cta_saldo     = 0.00;
     public $cta_banco_id  = null;
+    public $cta_numero    = null;
     public $cta_situacion = 1;
 
     public function __construct($args = [])
@@ -30,6 +32,7 @@ class Cuenta extends ActiveRecord
         $this->cta_tipo      = $args['cta_tipo']      ?? 'monetaria';
         $this->cta_saldo     = $args['cta_saldo']     ?? 0.00;
         $this->cta_banco_id  = $args['cta_banco_id']  ?? null;
+        $this->cta_numero    = $args['cta_numero']    ?? null;
         $this->cta_situacion = $args['cta_situacion'] ?? 1;
     }
 }
