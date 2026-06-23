@@ -51,6 +51,12 @@
                     </select>
                 </div>
 
+                <div class="mb-3 d-none" id="divNumero">
+                    <label for="cta_numero" class="form-label">Número de cuenta</label>
+                    <input type="text" class="form-control form-control-sm" id="cta_numero" name="cta_numero"
+                        placeholder="Ej: 001-123456-7890">
+                </div>
+
                 <div class="mb-3">
                     <label for="cta_saldo" class="form-label">Saldo inicial <span class="text-danger">*</span></label>
                     <div class="input-group input-group-sm">
