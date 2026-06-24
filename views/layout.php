@@ -57,27 +57,16 @@
                         </a>
                     </li>
 
-                    <!-- Configuración dropdown — DEBE ser <li> dentro del <ul> -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#"
-                            id="dropdownConfiguracion"
-                            role="button"
-                            data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            <i class="bi bi-gear me-1"></i>Configuración
+                    <li class="nav-item">
+                        <a class="nav-link" href="/<?= $_ENV['APP_NAME'] ?>/bancos">
+                            <i class="bi bi-bank2 me-1"></i>Bancos
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownConfiguracion">
-                            <li>
-                                <a class="dropdown-item" href="/<?= $_ENV['APP_NAME'] ?>/bancos">
-                                    <i class="bi bi-bank2 me-2"></i>Bancos
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="/<?= $_ENV['APP_NAME'] ?>/categorias">
-                                    <i class="bi bi-tags me-2"></i>Categorías
-                                </a>
-                            </li>
-                        </ul>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/<?= $_ENV['APP_NAME'] ?>/categorias">
+                            <i class="bi bi-tags me-1"></i>Categorías
+                        </a>
                     </li>
 
                 </ul>
