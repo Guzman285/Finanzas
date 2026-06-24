@@ -130,7 +130,7 @@ class GastoFijoController
                 return;
             }
 
-            $db = \ActiveRecord\ActiveRecord::getDB();
+            $db = \Model\ActiveRecord::getDB();
 
             // Insertar movimiento
             $db->prepare("

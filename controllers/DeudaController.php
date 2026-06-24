@@ -220,7 +220,7 @@ class DeudaController
                 return;
             }
 
-            $db = \ActiveRecord\ActiveRecord::getDB();
+            $db = \Model\ActiveRecord::getDB();
 
             $cat    = Categoria::fetchFirst("SELECT cat_id FROM categorias WHERE cat_nombre = 'Deuda' AND cat_situacion = 1");
             $cat_id = $cat ? $cat['cat_id'] : null;
@@ -304,7 +304,7 @@ class DeudaController
                 return;
             }
 
-            $db = \ActiveRecord\ActiveRecord::getDB();
+            $db = \Model\ActiveRecord::getDB();
 
             $dm = new DeudaMovimiento([
                 'dm_deu_id'        => $deu_id,
@@ -350,7 +350,7 @@ class DeudaController
                 return;
             }
 
-            $db = \ActiveRecord\ActiveRecord::getDB();
+            $db = \Model\ActiveRecord::getDB();
 
             $dm = new DeudaMovimiento([
                 'dm_deu_id'        => $deu_id,

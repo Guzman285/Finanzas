@@ -100,7 +100,7 @@ class MovimientoController
             if (empty($_POST['mov_gasto_fijo_id']))      $_POST['mov_gasto_fijo_id']     = null;
             if (empty($_POST['mov_deuda_id']))           $_POST['mov_deuda_id']          = null;
 
-            $db = \ActiveRecord\ActiveRecord::getDB();
+            $db = \Model\ActiveRecord::getDB();
 
             $db->prepare("
                 INSERT INTO movimientos
@@ -158,7 +158,7 @@ class MovimientoController
                 return;
             }
 
-            $db    = \ActiveRecord\ActiveRecord::getDB();
+            $db    = \Model\ActiveRecord::getDB();
             $monto = (float)$mov['mov_monto'];
             $co    = (int)$mov['mov_cuenta_origen_id'];
             $cd    = (int)$mov['mov_cuenta_destino_id'];
