@@ -18,6 +18,11 @@ class ActiveRecord {
         self::$db = $database;
     }
 
+    // Exponer la conexion PDO
+    public static function getDB() {
+        return self::$db;
+    }
+
     public static function setAlerta($tipo, $mensaje) {
         static::$alertas[$tipo][] = $mensaje;
     }
@@ -48,8 +53,6 @@ class ActiveRecord {
     public static function all() {
         $query = "SELECT * FROM " . static::$tabla;
         $resultado = self::consultarSQL($query);
-
-        // debuguear($resultado);
         return $resultado;
     }
 
@@ -64,11 +67,9 @@ class ActiveRecord {
                     $query.= " WHERE $value = " . self::$db->quote( $id[$value] );
                 }else{
                     $query.= " AND $value = " . self::$db->quote($id[$value] );
-
                 }
             }
         }else{
-
            $query.= " WHERE $idQuery = $id";
         }
                 
@@ -108,9 +109,6 @@ class ActiveRecord {
         $query .= " ) VALUES ("; 
         $query .= join(", ", array_values($atributos));
         $query .= " ) ";
-        
-
-        // debuguear($query);
 
         // Resultado de la consulta
         $resultado = self::$db->exec($query);
@@ -136,21 +134,16 @@ class ActiveRecord {
         $query .=  join(', ', $valores );
 
         if(is_array(static::$idTabla)){
-
             foreach (static::$idTabla as $key => $value) {
                 if($value == reset(static::$idTabla)){
                     $query.= " WHERE $value = " . self::$db->quote( $this->$value );
                 }else{
                     $query.= " AND $value = " . self::$db->quote($this->$value );
-
                 }
             }
         }else{
             $query .= " WHERE " . $id . " = " . self::$db->quote($this->$id) . " ";
-            
         }
-
-        // debuguear($query);
 
         $resultado = self::$db->exec($query);
         return [
@@ -194,7 +187,6 @@ class ActiveRecord {
         return $data;
     }
 
-        
     public static function fetchFirst($query){
         $resultado = self::$db->query($query);
         $respuesta = $resultado->fetchAll(PDO::FETCH_ASSOC);
@@ -218,8 +210,6 @@ class ActiveRecord {
 
         return $objeto;
     }
-
-
 
     // Identificar y unir los atributos de la BD
     public function atributos() {
