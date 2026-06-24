@@ -13,8 +13,9 @@ use Controllers\MovimientoController;
 $router = new Router();
 $router->setBaseURL('/' . $_ENV['APP_NAME']);
 
-// Inicio
-$router->get('/', [AppController::class, 'index']);
+// Inicio / Dashboard
+$router->get('/',              [AppController::class, 'index']);
+$router->get('/API/dashboard', [AppController::class, 'dashboardAPI']);
 
 // Cuentas
 $router->get('/cuentas',                [CuentaController::class, 'index']);
@@ -57,11 +58,11 @@ $router->post('/API/deudas/consumo',       [DeudaController::class, 'consumoAPI'
 $router->post('/API/deudas/ajustar',       [DeudaController::class, 'ajustarAPI']);
 
 // Movimientos
-$router->get('/movimientos',                    [MovimientoController::class, 'index']);
-$router->get('/API/movimientos/buscar',         [MovimientoController::class, 'buscarAPI']);
-$router->get('/API/movimientos/catalogos',      [MovimientoController::class, 'catalogosAPI']);
-$router->post('/API/movimientos/guardar',       [MovimientoController::class, 'guardarAPI']);
-$router->post('/API/movimientos/eliminar',      [MovimientoController::class, 'eliminarAPI']);
+$router->get('/movimientos',               [MovimientoController::class, 'index']);
+$router->get('/API/movimientos/buscar',    [MovimientoController::class, 'buscarAPI']);
+$router->get('/API/movimientos/catalogos', [MovimientoController::class, 'catalogosAPI']);
+$router->post('/API/movimientos/guardar',  [MovimientoController::class, 'guardarAPI']);
+$router->post('/API/movimientos/eliminar', [MovimientoController::class, 'eliminarAPI']);
 
 // Comprueba y valida las rutas
 $router->comprobarRutas();
