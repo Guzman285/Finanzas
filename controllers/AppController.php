@@ -7,6 +7,7 @@ use Model\Cuenta;
 use Model\Movimiento;
 use Model\Deuda;
 use Exception;
+use DateTime;
 
 class AppController
 {
@@ -44,12 +45,12 @@ class AppController
                 GROUP BY mov_tipo
             ");
 
-            $ingresos_mes     = 0;
-            $gastos_mes       = 0;
+            $ingresos_mes       = 0;
+            $gastos_mes         = 0;
             $transferencias_mes = 0;
             foreach ($mov_mes as $r) {
-                if ($r['mov_tipo'] === 'ingreso')       $ingresos_mes       = (float)$r['total'];
-                elseif ($r['mov_tipo'] === 'gasto')     $gastos_mes         = (float)$r['total'];
+                if ($r['mov_tipo'] === 'ingreso')           $ingresos_mes       = (float)$r['total'];
+                elseif ($r['mov_tipo'] === 'gasto')         $gastos_mes         = (float)$r['total'];
                 elseif ($r['mov_tipo'] === 'transferencia') $transferencias_mes = (float)$r['total'];
             }
 
@@ -70,11 +71,14 @@ class AppController
             // ── Ingresos vs Gastos ultimos 6 meses ───────────────────────────
             $tendencia = [];
             for ($i = 5; $i >= 0; $i--) {
-                $ts    = strtotime("-$i month");
-                $mes   = date('Y-m', $ts);
-                $label = date('M Y', $ts);
-                $ini   = $mes . '-01';
-                $fin   = date('Y-m-t', $ts);
+                $dt  = new DateTime('first day of this month');
+                $dt->modify("-$i month");
+
+                $ini   = $dt->format('Y-m-d');
+                $label = $dt->format('M Y');
+
+                $dt->modify('last day of this month');
+                $fin = $dt->format('Y-m-d');
 
                 $r_ing = Movimiento::fetchArray("
                     SELECT COALESCE(SUM(mov_monto), 0) AS t
@@ -134,17 +138,17 @@ class AppController
             ");
 
             echo json_encode([
-                'codigo'           => 1,
-                'saldo_total'      => $saldo_total,
-                'ingresos_mes'     => $ingresos_mes,
-                'gastos_mes'       => $gastos_mes,
+                'codigo'             => 1,
+                'saldo_total'        => $saldo_total,
+                'ingresos_mes'       => $ingresos_mes,
+                'gastos_mes'         => $gastos_mes,
                 'transferencias_mes' => $transferencias_mes,
-                'total_deuda'      => $total_deuda,
-                'cuentas'          => $cuentas,
-                'gastos_cat'       => $gastos_cat,
-                'tendencia'        => $tendencia,
-                'deudas'           => $deudas,
-                'ultimos'          => $ultimos,
+                'total_deuda'        => $total_deuda,
+                'cuentas'            => $cuentas,
+                'gastos_cat'         => $gastos_cat,
+                'tendencia'          => $tendencia,
+                'deudas'             => $deudas,
+                'ultimos'            => $ultimos,
             ]);
         } catch (Exception $e) {
             echo json_encode(['codigo' => 0, 'mensaje' => 'Error al cargar dashboard', 'detalle' => $e->getMessage()]);
