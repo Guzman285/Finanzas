@@ -41,8 +41,8 @@ class AppController
                 SELECT mov_tipo, SUM(mov_monto) AS total
                 FROM movimientos
                 WHERE mov_situacion = 1
-                  AND mov_fecha >= DATE('$inicio_mes')
-                  AND mov_fecha <= DATE('$hoy')
+                  AND mov_fecha >= TO_DATE('$inicio_mes', '%Y-%m-%d')
+                  AND mov_fecha <= TO_DATE('$hoy', '%Y-%m-%d')
                 GROUP BY mov_tipo
             ");
 
@@ -64,8 +64,8 @@ class AppController
                 LEFT JOIN categorias cat ON m.mov_categoria_id = cat.cat_id
                 WHERE m.mov_situacion = 1
                   AND m.mov_tipo = 'gasto'
-                  AND m.mov_fecha >= DATE('$inicio_mes')
-                  AND m.mov_fecha <= DATE('$hoy')
+                  AND m.mov_fecha >= TO_DATE('$inicio_mes', '%Y-%m-%d')
+                  AND m.mov_fecha <= TO_DATE('$hoy', '%Y-%m-%d')
                 GROUP BY COALESCE(cat.cat_nombre, 'Sin categoria')
                 ORDER BY total DESC
             ");
@@ -84,13 +84,15 @@ class AppController
                     SELECT COALESCE(SUM(mov_monto), 0) AS t
                     FROM movimientos
                     WHERE mov_situacion = 1 AND mov_tipo = 'ingreso'
-                      AND mov_fecha >= DATE('$ini') AND mov_fecha <= DATE('$fin')
+                      AND mov_fecha >= TO_DATE('$ini', '%Y-%m-%d')
+                      AND mov_fecha <= TO_DATE('$fin', '%Y-%m-%d')
                 ");
                 $r_gas = Movimiento::fetchArray("
                     SELECT COALESCE(SUM(mov_monto), 0) AS t
                     FROM movimientos
                     WHERE mov_situacion = 1 AND mov_tipo = 'gasto'
-                      AND mov_fecha >= DATE('$ini') AND mov_fecha <= DATE('$fin')
+                      AND mov_fecha >= TO_DATE('$ini', '%Y-%m-%d')
+                      AND mov_fecha <= TO_DATE('$fin', '%Y-%m-%d')
                 ");
 
                 $tendencia[] = [
