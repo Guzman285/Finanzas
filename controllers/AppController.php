@@ -56,9 +56,10 @@ class AppController
             }
 
             // ── Gastos por categoria (mes actual) ────────────────────────────
+            // Informix: no soporta COALESCE() ni GROUP BY con expresion — usar NVL() y agrupar por columna base
             $gastos_cat = Movimiento::fetchArray("
                 SELECT
-                    COALESCE(cat.cat_nombre, 'Sin categoria') AS categoria,
+                    NVL(cat.cat_nombre, 'Sin categoria') AS categoria,
                     SUM(m.mov_monto) AS total
                 FROM movimientos m
                 LEFT JOIN categorias cat ON m.mov_categoria_id = cat.cat_id
@@ -66,11 +67,12 @@ class AppController
                   AND m.mov_tipo = 'gasto'
                   AND m.mov_fecha >= TO_DATE('$inicio_mes', '%Y-%m-%d')
                   AND m.mov_fecha <= TO_DATE('$hoy', '%Y-%m-%d')
-                GROUP BY COALESCE(cat.cat_nombre, 'Sin categoria')
-                ORDER BY total DESC
+                GROUP BY cat.cat_nombre
+                ORDER BY 2 DESC
             ");
 
             // ── Ingresos vs Gastos ultimos 6 meses ───────────────────────────
+            // Informix: COALESCE(SUM(...), 0) no es valido cuando no hay filas — manejar en PHP
             $tendencia = [];
             for ($i = 5; $i >= 0; $i--) {
                 $dt = new DateTime('first day of this month');
@@ -81,14 +83,14 @@ class AppController
                 $fin   = $dt->format('Y-m-d');
 
                 $r_ing = Movimiento::fetchArray("
-                    SELECT COALESCE(SUM(mov_monto), 0) AS t
+                    SELECT SUM(mov_monto) AS t
                     FROM movimientos
                     WHERE mov_situacion = 1 AND mov_tipo = 'ingreso'
                       AND mov_fecha >= TO_DATE('$ini', '%Y-%m-%d')
                       AND mov_fecha <= TO_DATE('$fin', '%Y-%m-%d')
                 ");
                 $r_gas = Movimiento::fetchArray("
-                    SELECT COALESCE(SUM(mov_monto), 0) AS t
+                    SELECT SUM(mov_monto) AS t
                     FROM movimientos
                     WHERE mov_situacion = 1 AND mov_tipo = 'gasto'
                       AND mov_fecha >= TO_DATE('$ini', '%Y-%m-%d')
@@ -116,7 +118,7 @@ class AppController
                 INNER JOIN cuentas c ON d.deu_cuenta_id = c.cta_id
                 WHERE d.deu_situacion = 1
                   AND (d.deu_monto_total - d.deu_monto_pagado) > 0
-                ORDER BY saldo_pendiente DESC
+                ORDER BY 3 DESC
             ");
 
             $total_deuda = array_sum(array_column($deudas, 'saldo_pendiente'));
