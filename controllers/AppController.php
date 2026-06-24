@@ -22,8 +22,6 @@ class AppController
     {
         getHeadersApi();
         try {
-            $db = \ActiveRecord\ActiveRecord::getDB();
-
             // ── Saldos por cuenta ────────────────────────────────────────────
             $cuentas = Cuenta::fetchArray("
                 SELECT cta_id, cta_nombre, cta_tipo, cta_saldo
@@ -78,24 +76,23 @@ class AppController
                 $ini   = $mes . '-01';
                 $fin   = date('Y-m-t', $ts);
 
-                $ing = $db->query("
+                $r_ing = Movimiento::fetchArray("
                     SELECT COALESCE(SUM(mov_monto), 0) AS t
                     FROM movimientos
                     WHERE mov_situacion = 1 AND mov_tipo = 'ingreso'
                       AND mov_fecha BETWEEN '$ini' AND '$fin'
-                ")->fetchColumn();
-
-                $gas = $db->query("
+                ");
+                $r_gas = Movimiento::fetchArray("
                     SELECT COALESCE(SUM(mov_monto), 0) AS t
                     FROM movimientos
                     WHERE mov_situacion = 1 AND mov_tipo = 'gasto'
                       AND mov_fecha BETWEEN '$ini' AND '$fin'
-                ")->fetchColumn();
+                ");
 
                 $tendencia[] = [
                     'label'    => $label,
-                    'ingresos' => (float)$ing,
-                    'gastos'   => (float)$gas,
+                    'ingresos' => (float)($r_ing[0]['t'] ?? 0),
+                    'gastos'   => (float)($r_gas[0]['t'] ?? 0),
                 ];
             }
 
