@@ -75,9 +75,9 @@ class ActiveRecord {
         return array_shift($resultado);
     }
 
-    // Informix no soporta LIMIT — usar FETCH FIRST n ROWS ONLY
+    // Informix no soporta LIMIT ni FETCH FIRST — usar SELECT FIRST n
     public static function get($limite) {
-        $query = "SELECT * FROM " . static::$tabla . " FETCH FIRST " . (int)$limite . " ROWS ONLY";
+        $query = "SELECT FIRST " . (int)$limite . " * FROM " . static::$tabla;
         $resultado = self::consultarSQL($query);
         return array_shift($resultado);
     }
@@ -173,25 +173,33 @@ class ActiveRecord {
     }
 
     public static function fetchArray($query) {
-        $resultado = self::$db->query($query);
-        $respuesta = $resultado->fetchAll(PDO::FETCH_ASSOC);
-        $data = [];
-        foreach ($respuesta as $value) {
-            $data[] = array_change_key_case(self::sanitizarFila($value));
+        try {
+            $resultado = self::$db->query($query);
+            $respuesta = $resultado->fetchAll(PDO::FETCH_ASSOC);
+            $data = [];
+            foreach ($respuesta as $value) {
+                $data[] = array_change_key_case(self::sanitizarFila($value));
+            }
+            $resultado->closeCursor();
+            return $data;
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage() . " | QUERY: " . $query);
         }
-        $resultado->closeCursor();
-        return $data;
     }
 
     public static function fetchFirst($query) {
-        $resultado = self::$db->query($query);
-        $respuesta = $resultado->fetchAll(PDO::FETCH_ASSOC);
-        $data = [];
-        foreach ($respuesta as $value) {
-            $data[] = array_change_key_case(self::sanitizarFila($value));
+        try {
+            $resultado = self::$db->query($query);
+            $respuesta = $resultado->fetchAll(PDO::FETCH_ASSOC);
+            $data = [];
+            foreach ($respuesta as $value) {
+                $data[] = array_change_key_case(self::sanitizarFila($value));
+            }
+            $resultado->closeCursor();
+            return array_shift($data);
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage() . " | QUERY: " . $query);
         }
-        $resultado->closeCursor();
-        return array_shift($data);
     }
 
     protected static function crearObjeto($registro) {

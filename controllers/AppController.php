@@ -125,7 +125,7 @@ class AppController
 
             // ── Ultimos 10 movimientos ────────────────────────────────────────
             $ultimos = Movimiento::fetchArray("
-                SELECT
+                SELECT FIRST 10
                     m.mov_id,
                     m.mov_tipo,
                     m.mov_descripcion,
@@ -138,7 +138,6 @@ class AppController
                 LEFT JOIN categorias cat ON m.mov_categoria_id     = cat.cat_id
                 WHERE m.mov_situacion = 1
                 ORDER BY m.mov_fecha DESC, m.mov_id DESC
-                FETCH FIRST 10 ROWS ONLY
             ");
 
             echo json_encode([
