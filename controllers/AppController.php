@@ -34,14 +34,15 @@ class AppController
             $saldo_total = array_sum(array_column($cuentas, 'cta_saldo'));
 
             // ── Movimientos del mes actual ────────────────────────────────────
-            $hoy        = date('m/d/Y');
-            $inicio_mes = date('m/01/Y');
+            $hoy        = date('Y-m-d');
+            $inicio_mes = date('Y-m-01');
 
             $mov_mes = Movimiento::fetchArray("
                 SELECT mov_tipo, SUM(mov_monto) AS total
                 FROM movimientos
                 WHERE mov_situacion = 1
-                  AND mov_fecha BETWEEN TO_DATE('$inicio_mes','%m/%d/%Y') AND TO_DATE('$hoy','%m/%d/%Y')
+                  AND mov_fecha >= '$inicio_mes'
+                  AND mov_fecha <= '$hoy'
                 GROUP BY mov_tipo
             ");
 
@@ -63,7 +64,8 @@ class AppController
                 LEFT JOIN categorias cat ON m.mov_categoria_id = cat.cat_id
                 WHERE m.mov_situacion = 1
                   AND m.mov_tipo = 'gasto'
-                  AND m.mov_fecha BETWEEN TO_DATE('$inicio_mes','%m/%d/%Y') AND TO_DATE('$hoy','%m/%d/%Y')
+                  AND m.mov_fecha >= '$inicio_mes'
+                  AND m.mov_fecha <= '$hoy'
                 GROUP BY COALESCE(cat.cat_nombre, 'Sin categoria')
                 ORDER BY total DESC
             ");
@@ -73,24 +75,22 @@ class AppController
             for ($i = 5; $i >= 0; $i--) {
                 $dt = new DateTime('first day of this month');
                 $dt->modify("-$i month");
-
-                $ini   = $dt->format('m/d/Y');
+                $ini   = $dt->format('Y-m-d');
                 $label = $dt->format('M Y');
-
                 $dt->modify('last day of this month');
-                $fin = $dt->format('m/d/Y');
+                $fin   = $dt->format('Y-m-d');
 
                 $r_ing = Movimiento::fetchArray("
                     SELECT COALESCE(SUM(mov_monto), 0) AS t
                     FROM movimientos
                     WHERE mov_situacion = 1 AND mov_tipo = 'ingreso'
-                      AND mov_fecha BETWEEN TO_DATE('$ini','%m/%d/%Y') AND TO_DATE('$fin','%m/%d/%Y')
+                      AND mov_fecha >= '$ini' AND mov_fecha <= '$fin'
                 ");
                 $r_gas = Movimiento::fetchArray("
                     SELECT COALESCE(SUM(mov_monto), 0) AS t
                     FROM movimientos
                     WHERE mov_situacion = 1 AND mov_tipo = 'gasto'
-                      AND mov_fecha BETWEEN TO_DATE('$ini','%m/%d/%Y') AND TO_DATE('$fin','%m/%d/%Y')
+                      AND mov_fecha >= '$ini' AND mov_fecha <= '$fin'
                 ");
 
                 $tendencia[] = [
