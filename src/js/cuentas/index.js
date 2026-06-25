@@ -16,6 +16,7 @@ const selectTipo          = document.getElementById("cta_tipo");
 const divBanco            = document.getElementById("divBanco");
 const selectBanco         = document.getElementById("cta_banco_id");
 const divNumero           = document.getElementById("divNumero");
+const lblCtaSaldo         = document.getElementById("lbl_cta_saldo");
 
 spanLoader.classList.add("d-none");
 spanLoaderModificar.classList.add("d-none");
@@ -102,6 +103,14 @@ const actualizarCamposTipo = async (tipo, bancoId = "") => {
     divBanco.classList.add("d-none");
     divNumero.classList.add("d-none");
     selectBanco.value = "";
+  }
+
+  if (lblCtaSaldo) {
+    if (tipo === "tarjeta_credito") {
+      lblCtaSaldo.innerHTML = 'Límite de crédito <span class="text-danger">*</span>';
+    } else {
+      lblCtaSaldo.innerHTML = 'Saldo inicial <span class="text-danger">*</span>';
+    }
   }
 };
 
@@ -304,6 +313,9 @@ const resetearModal = () => {
   spanLoaderModificar.classList.add("d-none");
   divBanco.classList.add("d-none");
   divNumero.classList.add("d-none");
+  if (lblCtaSaldo) {
+    lblCtaSaldo.innerHTML = 'Saldo inicial <span class="text-danger">*</span>';
+  }
   formCuenta.reset();
 };
 

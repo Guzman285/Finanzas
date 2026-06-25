@@ -58,7 +58,7 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="cta_saldo" class="form-label">Saldo inicial <span class="text-danger">*</span></label>
+                    <label for="cta_saldo" class="form-label" id="lbl_cta_saldo">Saldo inicial <span class="text-danger">*</span></label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">Q</span>
                         <input type="number" step="0.01" min="0" class="form-control form-control-sm"

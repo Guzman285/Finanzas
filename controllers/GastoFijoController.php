@@ -112,6 +112,7 @@ class GastoFijoController
             $gf_id  = (int)($_POST['gf_id']  ?? 0);
             $monto  = (float)($_POST['monto'] ?? 0);
             $fecha  = trim($_POST['fecha']    ?? '');
+            $cuenta_id = (int)($_POST['cuenta_id'] ?? 0);
 
             if (!$gf_id || $monto <= 0 || !$fecha) {
                 echo json_encode(['codigo' => 0, 'mensaje' => 'Datos incompletos']);
@@ -119,15 +120,18 @@ class GastoFijoController
             }
 
             $gf = GastoFijo::fetchFirst("
-                SELECT gf.*, c.cta_saldo
+                SELECT gf.*
                 FROM gastos_fijos gf
-                INNER JOIN cuentas c ON gf.gf_cuenta_id = c.cta_id
                 WHERE gf.gf_id = {$gf_id}
             ");
 
             if (!$gf) {
                 echo json_encode(['codigo' => 0, 'mensaje' => 'Gasto fijo no encontrado']);
                 return;
+            }
+
+            if (!$cuenta_id) {
+                $cuenta_id = (int)$gf['gf_cuenta_id'];
             }
 
             $db = \Model\ActiveRecord::getDB();
@@ -144,7 +148,7 @@ class GastoFijoController
                 ':desc'      => $gf['gf_descripcion'],
                 ':monto'     => $monto,
                 ':fecha'     => $fecha,
-                ':cuenta_id' => $gf['gf_cuenta_id'],
+                ':cuenta_id' => $cuenta_id,
                 ':cat_id'    => $gf['gf_categoria_id'],
                 ':gf_id'     => $gf_id
             ]);
@@ -156,7 +160,7 @@ class GastoFijoController
                 WHERE cta_id = :cta_id
             ")->execute([
                 ':monto'  => $monto,
-                ':cta_id' => $gf['gf_cuenta_id']
+                ':cta_id' => $cuenta_id
             ]);
 
             echo json_encode(['codigo' => 1, 'mensaje' => 'Pago registrado correctamente']);

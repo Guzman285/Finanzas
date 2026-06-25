@@ -91,6 +91,13 @@
                 <p class="mb-2 text-muted" id="pagarDescripcion"></p>
 
                 <div class="mb-3">
+                    <label for="pagar_cuenta_id" class="form-label">Cuenta / Tarjeta <span class="text-danger">*</span></label>
+                    <select class="form-select form-select-sm" id="pagar_cuenta_id" name="cuenta_id">
+                        <option value="">-- Selecciona cuenta --</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
                     <label for="pagar_monto" class="form-label">Monto real <span class="text-danger">*</span></label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">Q</span>

@@ -18,6 +18,7 @@ const modalTitleId        = document.getElementById("modalTitleId");
 const btnNuevo            = document.getElementById("btnNuevo");
 const selectCuenta        = document.getElementById("gf_cuenta_id");
 const selectCategoria     = document.getElementById("gf_categoria_id");
+const selectPagarCuenta   = document.getElementById("pagar_cuenta_id");
 
 spanLoader.classList.add("d-none");
 spanLoaderModificar.classList.add("d-none");
@@ -52,7 +53,8 @@ let datatable = new DataTable("#datatable", {
             title='Registrar pago'
             data-gf-id='${data}'
             data-descripcion='${row.gf_descripcion}'
-            data-monto='${row.gf_monto_estimado}'>
+            data-monto='${row.gf_monto_estimado}'
+            data-cuenta='${row.gf_cuenta_id}'>
             <i class='bi bi-cash-coin'></i>
           </button>
           <button style='min-width:31px;max-width:32px;min-height:31px;max-height:32px'
@@ -189,18 +191,47 @@ const eliminarApi = async (e) => {
 };
 
 // ── Pagar ──────────────────────────────────────────────────
-const abrirPagar = (e) => {
-  const { gfId, descripcion, monto } = e.currentTarget.dataset;
+const cargarCuentasPago = async (defaultCuentaId) => {
+  try {
+    const r    = await fetch(`${RUTA_APP}/API/cuentas/buscar`, { headers: { "X-Requested-With": "fetch" } });
+    const data = await r.json();
+    if (data.codigo == 1) {
+      selectPagarCuenta.innerHTML = '<option value="">-- Selecciona cuenta --</option>';
+      data.datos.forEach((c) => {
+        const saldo = parseFloat(c.cta_saldo);
+        if (saldo > 0) {
+          const formattedSaldo = saldo.toFixed(2);
+          selectPagarCuenta.innerHTML += `<option value="${c.cta_id}">${c.cta_nombre} (Q ${formattedSaldo})</option>`;
+        }
+      });
+      selectPagarCuenta.value = defaultCuentaId;
+    }
+  } catch (e) { console.log(e); }
+};
+
+const abrirPagar = async (e) => {
+  const { gfId, descripcion, monto, cuenta } = e.currentTarget.dataset;
   document.getElementById("pagar_gf_id").value    = gfId;
   document.getElementById("pagarDescripcion").textContent = descripcion;
   document.getElementById("pagar_monto").value    = monto;
   document.getElementById("pagar_fecha").value    = new Date().toISOString().slice(0, 10);
+
+  await cargarCuentasPago(cuenta);
+
   modalBSPagar.show();
 };
 
 const pagarApi = async () => {
   spanLoaderPagar.classList.remove("d-none");
   btnPagar.disabled = true;
+
+  const selectPagarCuentaVal = selectPagarCuenta.value;
+  if (!selectPagarCuentaVal) {
+    Toast.fire({ icon: "warning", title: "Debe seleccionar una cuenta para pagar" });
+    spanLoaderPagar.classList.add("d-none");
+    btnPagar.disabled = false;
+    return;
+  }
 
   const body = new FormData(document.getElementById("formPagar"));
   try {
