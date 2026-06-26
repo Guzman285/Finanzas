@@ -16,15 +16,18 @@ const spanLoaderPagar     = document.getElementById("spanLoaderPagar");
 const btnPagar            = document.getElementById("btnPagar");
 const modalTitleId        = document.getElementById("modalTitleId");
 const btnNuevo            = document.getElementById("btnNuevo");
-const selectCuenta        = document.getElementById("gf_cuenta_id");
 const selectCategoria     = document.getElementById("gf_categoria_id");
 const selectPagarCuenta   = document.getElementById("pagar_cuenta_id");
+const infoCuentaDiv       = document.getElementById("infoCuentaSeleccionada");
 
 spanLoader.classList.add("d-none");
 spanLoaderModificar.classList.add("d-none");
 spanLoaderPagar.classList.add("d-none");
 btnModificar.style.display = "none";
 btnModificar.disabled = true;
+
+// Almacena los datos de cuentas para mostrar info al seleccionar
+let _cuentasPago = [];
 
 // ── DataTable ──────────────────────────────────────────────
 let datatable = new DataTable("#datatable", {
@@ -39,12 +42,11 @@ let datatable = new DataTable("#datatable", {
       render: (d) => `Q ${parseFloat(d).toFixed(2)}`,
     },
     { title: "DÍA PAGO", data: "gf_dia_pago", width: "6%" },
-    { title: "CUENTA",    data: "cuenta_nombre" },
     { title: "CATEGORÍA", data: "categoria_nombre" },
     {
       title: "Acciones",
       data: "gf_id",
-      width: "14%",
+      width: "12%",
       searchable: false,
       render: (data, type, row) => `
         <div class='text-center'>
@@ -53,8 +55,7 @@ let datatable = new DataTable("#datatable", {
             title='Registrar pago'
             data-gf-id='${data}'
             data-descripcion='${row.gf_descripcion}'
-            data-monto='${row.gf_monto_estimado}'
-            data-cuenta='${row.gf_cuenta_id}'>
+            data-monto='${row.gf_monto_estimado}'>
             <i class='bi bi-cash-coin'></i>
           </button>
           <button style='min-width:31px;max-width:32px;min-height:31px;max-height:32px'
@@ -64,7 +65,6 @@ let datatable = new DataTable("#datatable", {
             data-descripcion='${row.gf_descripcion}'
             data-monto='${row.gf_monto_estimado}'
             data-dia='${row.gf_dia_pago}'
-            data-cuenta='${row.gf_cuenta_id}'
             data-categoria='${row.gf_categoria_id}'>
             <i class='bi bi-pencil-fill'></i>
           </button>
@@ -79,23 +79,11 @@ let datatable = new DataTable("#datatable", {
   ],
 });
 
-// ── Cargar selects ──────────────────────────────────────────
-const cargarCuentas = async () => {
-  const r    = await fetch(`${RUTA_APP}/API/cuentas/buscar`, { headers: { "X-Requested-With": "fetch" } });
-  const data = await r.json();
-  if (data.codigo == 1) {
-    selectCuenta.innerHTML = '<option value="">-- Selecciona cuenta --</option>';
-    data.datos.forEach((c) => {
-      selectCuenta.innerHTML += `<option value="${c.cta_id}">${c.cta_nombre}</option>`;
-    });
-  }
-};
-
+// ── Cargar categorías ──────────────────────────────────────
 const cargarCategorias = async () => {
   const r    = await fetch(`${RUTA_APP}/API/categorias/buscar`, { headers: { "X-Requested-With": "fetch" } });
   const data = await r.json();
   if (data.codigo == 1) {
-    // Solo categorías de tipo gasto
     selectCategoria.innerHTML = '<option value="">-- Selecciona categoría --</option>';
     data.datos
       .filter((c) => c.cat_tipo === "gasto")
@@ -153,7 +141,7 @@ const modificarApi = async (e) => {
   spanLoaderModificar.classList.remove("d-none");
   btnModificar.disabled = true;
 
-  if (!validarFormulario(formGF, [])) {
+  if (!validarFormulario(formGF, ["gf_id"])) {
     Toast.fire({ icon: "warning", title: "Revise la información ingresada" });
     spanLoaderModificar.classList.add("d-none");
     btnModificar.disabled = false;
@@ -190,43 +178,81 @@ const eliminarApi = async (e) => {
   } catch (e) { console.log(e); }
 };
 
-// ── Pagar ──────────────────────────────────────────────────
-const cargarCuentasPago = async (defaultCuentaId) => {
+// ── Cargar cuentas para pago (muestra disponible real) ─────
+const cargarCuentasPago = async () => {
   try {
     const r    = await fetch(`${RUTA_APP}/API/cuentas/buscar`, { headers: { "X-Requested-With": "fetch" } });
     const data = await r.json();
     if (data.codigo == 1) {
+      _cuentasPago = data.datos;
       selectPagarCuenta.innerHTML = '<option value="">-- Selecciona cuenta --</option>';
       data.datos.forEach((c) => {
-        const saldo = parseFloat(c.cta_saldo);
-        if (saldo > 0) {
-          const formattedSaldo = saldo.toFixed(2);
-          selectPagarCuenta.innerHTML += `<option value="${c.cta_id}">${c.cta_nombre} (Q ${formattedSaldo})</option>`;
+        const saldo   = parseFloat(c.cta_saldo);
+        const limite  = parseFloat(c.cta_limite_credito ?? 0);
+        let disponible, label;
+
+        if (c.cta_tipo === "tarjeta_credito") {
+          disponible = limite - saldo;
+          label = `${c.cta_nombre} (TC — disponible: Q ${disponible.toFixed(2)})`;
+        } else {
+          disponible = saldo;
+          label = `${c.cta_nombre} (Q ${disponible.toFixed(2)})`;
+        }
+
+        // Solo mostrar si tiene fondos/crédito disponible
+        if (disponible > 0) {
+          selectPagarCuenta.innerHTML += `<option value="${c.cta_id}">${label}</option>`;
         }
       });
-      selectPagarCuenta.value = defaultCuentaId;
     }
   } catch (e) { console.log(e); }
 };
 
+// Muestra info de la cuenta seleccionada debajo del select
+const mostrarInfoCuenta = () => {
+  const id     = selectPagarCuenta.value;
+  const cuenta = _cuentasPago.find((c) => c.cta_id == id);
+  if (!cuenta || !infoCuentaDiv) return;
+
+  if (cuenta.cta_tipo === "tarjeta_credito") {
+    const limite     = parseFloat(cuenta.cta_limite_credito ?? 0);
+    const usado      = parseFloat(cuenta.cta_saldo);
+    const disponible = limite - usado;
+    infoCuentaDiv.innerHTML = `
+      <span class="text-warning"><i class="bi bi-credit-card me-1"></i>Tarjeta de crédito</span> &mdash;
+      Límite: <strong>Q ${limite.toFixed(2)}</strong> |
+      Usado: <strong>Q ${usado.toFixed(2)}</strong> |
+      Disponible: <strong class="text-success">Q ${disponible.toFixed(2)}</strong>`;
+  } else {
+    infoCuentaDiv.innerHTML = `
+      <span class="text-primary"><i class="bi bi-bank me-1"></i>Saldo disponible:</span>
+      <strong>Q ${parseFloat(cuenta.cta_saldo).toFixed(2)}</strong>`;
+  }
+};
+
+if (selectPagarCuenta) {
+  selectPagarCuenta.addEventListener("change", mostrarInfoCuenta);
+}
+
+// ── Abrir modal pagar ──────────────────────────────────────
 const abrirPagar = async (e) => {
-  const { gfId, descripcion, monto, cuenta } = e.currentTarget.dataset;
-  document.getElementById("pagar_gf_id").value    = gfId;
+  const { gfId, descripcion, monto } = e.currentTarget.dataset;
+  document.getElementById("pagar_gf_id").value           = gfId;
   document.getElementById("pagarDescripcion").textContent = descripcion;
-  document.getElementById("pagar_monto").value    = monto;
-  document.getElementById("pagar_fecha").value    = new Date().toISOString().slice(0, 10);
+  document.getElementById("pagar_monto").value            = monto;
+  document.getElementById("pagar_fecha").value            = new Date().toISOString().slice(0, 10);
+  if (infoCuentaDiv) infoCuentaDiv.innerHTML = "";
 
-  await cargarCuentasPago(cuenta);
-
+  await cargarCuentasPago();
   modalBSPagar.show();
 };
 
+// ── Confirmar pago ─────────────────────────────────────────
 const pagarApi = async () => {
   spanLoaderPagar.classList.remove("d-none");
   btnPagar.disabled = true;
 
-  const selectPagarCuentaVal = selectPagarCuenta.value;
-  if (!selectPagarCuentaVal) {
+  if (!selectPagarCuenta.value) {
     Toast.fire({ icon: "warning", title: "Debe seleccionar una cuenta para pagar" });
     spanLoaderPagar.classList.add("d-none");
     btnPagar.disabled = false;
@@ -248,14 +274,13 @@ const pagarApi = async () => {
 
 // ── Asignar valores al editar ──────────────────────────────
 const asignarValores = async (e) => {
-  const { gfId, descripcion, monto, dia, cuenta, categoria } = e.currentTarget.dataset;
+  const { gfId, descripcion, monto, dia, categoria } = e.currentTarget.dataset;
   formGF.gf_id.value             = gfId;
   formGF.gf_descripcion.value    = descripcion;
   formGF.gf_monto_estimado.value = monto;
   formGF.gf_dia_pago.value       = dia;
 
-  await Promise.all([cargarCuentas(), cargarCategorias()]);
-  formGF.gf_cuenta_id.value    = cuenta;
+  await cargarCategorias();
   formGF.gf_categoria_id.value = categoria;
 
   modalTitleId.textContent   = "Modificar Gasto Fijo";
@@ -287,7 +312,7 @@ const resetearModal = () => {
 formGF.addEventListener("submit", guardarApi);
 btnNuevo.addEventListener("click", async () => {
   resetearModal();
-  await Promise.all([cargarCuentas(), cargarCategorias()]);
+  await cargarCategorias();
   modalBS.show();
 });
 btnModificar.addEventListener("click", modificarApi);

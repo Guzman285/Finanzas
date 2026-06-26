@@ -59,9 +59,20 @@ let datatableCuentas = new DataTable("#datatableCuentas", {
       render: (data) => data ?? "—",
     },
     {
-      title: "SALDO",
+      title: "SALDO / DISPONIBLE",
       data: "cta_saldo",
-      render: (data) => `Q ${parseFloat(data).toFixed(2)}`,
+      render: (data, type, row) => {
+        if (row.cta_tipo === "tarjeta_credito") {
+          const limite    = parseFloat(row.cta_limite_credito ?? 0);
+          const usado     = parseFloat(data);
+          const disponible = limite - usado;
+          return `<span title="Límite: Q ${limite.toFixed(2)} | Usado: Q ${usado.toFixed(2)}">
+            <span class="text-success">Q ${disponible.toFixed(2)}</span>
+            <small class="text-muted"> / Q ${limite.toFixed(2)}</small>
+          </span>`;
+        }
+        return `Q ${parseFloat(data).toFixed(2)}`;
+      },
     },
     {
       title: "Acciones",
@@ -77,6 +88,7 @@ let datatableCuentas = new DataTable("#datatableCuentas", {
             data-nombre='${row.cta_nombre}'
             data-tipo='${row.cta_tipo}'
             data-saldo='${row.cta_saldo}'
+            data-limite='${row.cta_limite_credito ?? ""}'
             data-numero='${row.cta_numero ?? ""}'
             data-banco='${row.cta_banco_id ?? ""}'>
             <i class='bi bi-pencil-fill'></i>
@@ -280,12 +292,18 @@ const eliminarApi = async (e) => {
 
 // ── Asignar valores al editar ──────────────────────────────
 const asignarValores = async (e) => {
-  const { codigo, nombre, tipo, saldo, banco, numero } = e.currentTarget.dataset;
+  const { codigo, nombre, tipo, saldo, limite, banco, numero } = e.currentTarget.dataset;
   formCuenta.cta_id.value     = codigo;
   formCuenta.cta_nombre.value = nombre;
-  formCuenta.cta_saldo.value  = saldo;
   formCuenta.cta_tipo.value   = tipo;
   formCuenta.cta_numero.value = numero;
+
+  // Para TC: el campo muestra el límite; para otras: muestra el saldo
+  if (tipo === "tarjeta_credito") {
+    formCuenta.cta_saldo.value = limite;
+  } else {
+    formCuenta.cta_saldo.value = saldo;
+  }
 
   await actualizarCamposTipo(tipo, banco);
 

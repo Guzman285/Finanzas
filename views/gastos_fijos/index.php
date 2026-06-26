@@ -51,13 +51,6 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="gf_cuenta_id" class="form-label">Cuenta <span class="text-danger">*</span></label>
-                    <select class="form-select form-select-sm" id="gf_cuenta_id" name="gf_cuenta_id">
-                        <option value="">-- Selecciona cuenta --</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
                     <label for="gf_categoria_id" class="form-label">Categoría <span class="text-danger">*</span></label>
                     <select class="form-select form-select-sm" id="gf_categoria_id" name="gf_categoria_id">
                         <option value="">-- Selecciona categoría --</option>
@@ -95,6 +88,7 @@
                     <select class="form-select form-select-sm" id="pagar_cuenta_id" name="cuenta_id">
                         <option value="">-- Selecciona cuenta --</option>
                     </select>
+                    <div id="infoCuentaSeleccionada" class="form-text text-muted mt-1"></div>
                 </div>
 
                 <div class="mb-3">

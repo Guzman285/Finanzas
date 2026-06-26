@@ -71,11 +71,11 @@ class MovimientoController
     {
         getHeadersApi();
         try {
-            $tipo       = trim($_POST['mov_tipo']            ?? '');
-            $descripcion= trim($_POST['mov_descripcion']     ?? '');
-            $monto      = (float)($_POST['mov_monto']        ?? 0);
-            $fecha      = trim($_POST['mov_fecha']           ?? '');
-            $cta_origen = (int)($_POST['mov_cuenta_origen_id'] ?? 0);
+            $tipo        = trim($_POST['mov_tipo']              ?? '');
+            $descripcion = trim($_POST['mov_descripcion']       ?? '');
+            $monto       = (float)($_POST['mov_monto']          ?? 0);
+            $fecha       = trim($_POST['mov_fecha']             ?? '');
+            $cta_origen  = (int)($_POST['mov_cuenta_origen_id'] ?? 0);
 
             if (!$tipo || !$descripcion || $monto <= 0 || !$fecha || !$cta_origen) {
                 echo json_encode(['codigo' => 0, 'mensaje' => 'Datos incompletos']);
@@ -100,6 +100,33 @@ class MovimientoController
             if (empty($_POST['mov_gasto_fijo_id']))      $_POST['mov_gasto_fijo_id']     = null;
             if (empty($_POST['mov_deuda_id']))           $_POST['mov_deuda_id']          = null;
 
+            // Obtener tipo de cuenta origen para validar fondos
+            $cuentaOrigen = Cuenta::fetchFirst("
+                SELECT cta_id, cta_tipo, cta_saldo, cta_limite_credito
+                FROM cuentas WHERE cta_id = {$cta_origen}
+            ");
+
+            if (!$cuentaOrigen) {
+                echo json_encode(['codigo' => 0, 'mensaje' => 'Cuenta origen no encontrada']);
+                return;
+            }
+
+            // Validar fondos disponibles antes de registrar
+            if (in_array($tipo, ['gasto', 'transferencia'])) {
+                if ($cuentaOrigen['cta_tipo'] === 'tarjeta_credito') {
+                    $disponible = (float)$cuentaOrigen['cta_limite_credito'] - (float)$cuentaOrigen['cta_saldo'];
+                    if ($monto > $disponible) {
+                        echo json_encode(['codigo' => 0, 'mensaje' => 'Crédito insuficiente. Disponible: Q ' . number_format($disponible, 2)]);
+                        return;
+                    }
+                } else {
+                    if ($monto > (float)$cuentaOrigen['cta_saldo']) {
+                        echo json_encode(['codigo' => 0, 'mensaje' => 'Saldo insuficiente. Disponible: Q ' . number_format((float)$cuentaOrigen['cta_saldo'], 2)]);
+                        return;
+                    }
+                }
+            }
+
             $db = \Model\ActiveRecord::getDB();
 
             $db->prepare("
@@ -122,12 +149,29 @@ class MovimientoController
                 ':deu'   => $_POST['mov_deuda_id'],
             ]);
 
+            // Ajustar saldo según tipo de cuenta y tipo de movimiento
             if ($tipo === 'ingreso') {
-                $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo + $monto WHERE cta_id = $cta_origen");
+                if ($cuentaOrigen['cta_tipo'] === 'tarjeta_credito') {
+                    // Ingreso en TC = abono/pago de deuda: reduce saldo utilizado
+                    $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo - $monto WHERE cta_id = $cta_origen");
+                } else {
+                    $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo + $monto WHERE cta_id = $cta_origen");
+                }
             } elseif ($tipo === 'gasto') {
-                $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo - $monto WHERE cta_id = $cta_origen");
+                if ($cuentaOrigen['cta_tipo'] === 'tarjeta_credito') {
+                    // Gasto en TC = incrementa deuda (saldo utilizado sube)
+                    $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo + $monto WHERE cta_id = $cta_origen");
+                } else {
+                    $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo - $monto WHERE cta_id = $cta_origen");
+                }
             } elseif ($tipo === 'transferencia') {
-                $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo - $monto WHERE cta_id = $cta_origen");
+                // Transferencia: origen siempre pierde (TC pierde disponible, banco pierde saldo)
+                if ($cuentaOrigen['cta_tipo'] === 'tarjeta_credito') {
+                    $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo + $monto WHERE cta_id = $cta_origen");
+                } else {
+                    $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo - $monto WHERE cta_id = $cta_origen");
+                }
+                // Cuenta destino siempre recibe saldo normal
                 $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo + $monto WHERE cta_id = $cta_destino");
             }
 
@@ -164,12 +208,32 @@ class MovimientoController
             $cd    = (int)$mov['mov_cuenta_destino_id'];
             $tipo  = $mov['mov_tipo'];
 
+            // Obtener tipo de cuenta origen para revertir correctamente
+            $cuentaOrigen = Cuenta::fetchFirst("
+                SELECT cta_tipo FROM cuentas WHERE cta_id = {$co}
+            ");
+            $esTc = $cuentaOrigen && $cuentaOrigen['cta_tipo'] === 'tarjeta_credito';
+
             if ($tipo === 'ingreso') {
-                $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo - $monto WHERE cta_id = $co");
+                // Revertir ingreso: si era TC, sube la deuda; si era banco, resta saldo
+                if ($esTc) {
+                    $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo + $monto WHERE cta_id = $co");
+                } else {
+                    $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo - $monto WHERE cta_id = $co");
+                }
             } elseif ($tipo === 'gasto') {
-                $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo + $monto WHERE cta_id = $co");
+                // Revertir gasto: si era TC, baja la deuda; si era banco, suma saldo
+                if ($esTc) {
+                    $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo - $monto WHERE cta_id = $co");
+                } else {
+                    $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo + $monto WHERE cta_id = $co");
+                }
             } elseif ($tipo === 'transferencia' && $cd) {
-                $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo + $monto WHERE cta_id = $co");
+                if ($esTc) {
+                    $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo - $monto WHERE cta_id = $co");
+                } else {
+                    $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo + $monto WHERE cta_id = $co");
+                }
                 $db->exec("UPDATE cuentas SET cta_saldo = cta_saldo - $monto WHERE cta_id = $cd");
             }
 
@@ -187,7 +251,12 @@ class MovimientoController
         getHeadersApi();
         try {
             $cuentas = Cuenta::fetchArray("
-                SELECT cta_id, cta_nombre, cta_tipo, cta_saldo
+                SELECT
+                    cta_id,
+                    cta_nombre,
+                    cta_tipo,
+                    cta_saldo,
+                    cta_limite_credito
                 FROM cuentas WHERE cta_situacion = 1 ORDER BY cta_nombre
             ");
             $categorias = Categoria::fetchArray("

@@ -13,6 +13,7 @@ class GastoFijo extends ActiveRecord
         'gf_dia_pago',
         'gf_categoria_id',
         'gf_situacion'
+        // gf_cuenta_id excluido del CRUD — se asigna solo al momento de pagar
     ];
 
     public $gf_id             = null;
