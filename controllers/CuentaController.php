@@ -26,6 +26,7 @@ class CuentaController
                     c.cta_nombre,
                     c.cta_tipo,
                     c.cta_saldo,
+                    c.cta_limite_credito,
                     c.cta_banco_id,
                     c.cta_numero,
                     b.ban_nombre AS banco_nombre
@@ -57,6 +58,15 @@ class CuentaController
                 echo json_encode(['codigo' => 0, 'mensaje' => 'Nombre y tipo son requeridos']);
                 return;
             }
+
+            // Tarjeta de crédito: saldo inicia en 0, el monto ingresado es el límite
+            if ($_POST['cta_tipo'] === 'tarjeta_credito') {
+                $_POST['cta_limite_credito'] = $_POST['cta_saldo'] ?? 0;
+                $_POST['cta_saldo'] = 0;
+            } else {
+                $_POST['cta_limite_credito'] = null;
+            }
+
             $cuenta = new Cuenta($_POST);
             $cuenta->crear();
 

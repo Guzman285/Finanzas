@@ -25,12 +25,9 @@ class GastoFijoController
                     gf.gf_descripcion,
                     gf.gf_monto_estimado,
                     gf.gf_dia_pago,
-                    gf.gf_cuenta_id,
                     gf.gf_categoria_id,
-                    c.cta_nombre  AS cuenta_nombre,
                     cat.cat_nombre AS categoria_nombre
                 FROM gastos_fijos gf
-                INNER JOIN cuentas     c   ON gf.gf_cuenta_id    = c.cta_id
                 INNER JOIN categorias  cat ON gf.gf_categoria_id = cat.cat_id
                 WHERE gf.gf_situacion = 1
                 ORDER BY gf.gf_dia_pago, gf.gf_descripcion
@@ -52,7 +49,6 @@ class GastoFijoController
         try {
             if (
                 empty($_POST['gf_descripcion']) ||
-                empty($_POST['gf_cuenta_id'])   ||
                 empty($_POST['gf_categoria_id'])
             ) {
                 echo json_encode(['codigo' => 0, 'mensaje' => 'Datos incompletos']);
@@ -104,7 +100,7 @@ class GastoFijoController
     }
 
     // POST /API/gastos_fijos/pagar
-    // Registra un movimiento de gasto y descuenta saldo de la cuenta
+    // Registra un movimiento de gasto y ajusta saldo de la cuenta
     public static function pagarAPI()
     {
         getHeadersApi();
@@ -114,7 +110,7 @@ class GastoFijoController
             $fecha  = trim($_POST['fecha']    ?? '');
             $cuenta_id = (int)($_POST['cuenta_id'] ?? 0);
 
-            if (!$gf_id || $monto <= 0 || !$fecha) {
+            if (!$gf_id || $monto <= 0 || !$fecha || !$cuenta_id) {
                 echo json_encode(['codigo' => 0, 'mensaje' => 'Datos incompletos']);
                 return;
             }
@@ -130,8 +126,29 @@ class GastoFijoController
                 return;
             }
 
-            if (!$cuenta_id) {
-                $cuenta_id = (int)$gf['gf_cuenta_id'];
+            // Obtener tipo de cuenta para saber cómo ajustar el saldo
+            $cuenta = \Model\Cuenta::fetchFirst("
+                SELECT cta_id, cta_tipo, cta_saldo, cta_limite_credito
+                FROM cuentas WHERE cta_id = {$cuenta_id}
+            ");
+
+            if (!$cuenta) {
+                echo json_encode(['codigo' => 0, 'mensaje' => 'Cuenta no encontrada']);
+                return;
+            }
+
+            // Validar fondos disponibles
+            if ($cuenta['cta_tipo'] === 'tarjeta_credito') {
+                $disponible = (float)$cuenta['cta_limite_credito'] - (float)$cuenta['cta_saldo'];
+                if ($monto > $disponible) {
+                    echo json_encode(['codigo' => 0, 'mensaje' => 'Saldo insuficiente. Disponible: Q ' . number_format($disponible, 2)]);
+                    return;
+                }
+            } else {
+                if ($monto > (float)$cuenta['cta_saldo']) {
+                    echo json_encode(['codigo' => 0, 'mensaje' => 'Saldo insuficiente. Disponible: Q ' . number_format((float)$cuenta['cta_saldo'], 2)]);
+                    return;
+                }
             }
 
             $db = \Model\ActiveRecord::getDB();
@@ -153,15 +170,28 @@ class GastoFijoController
                 ':gf_id'     => $gf_id
             ]);
 
-            // Descontar saldo
-            $db->prepare("
-                UPDATE cuentas
-                SET cta_saldo = cta_saldo - :monto
-                WHERE cta_id = :cta_id
-            ")->execute([
-                ':monto'  => $monto,
-                ':cta_id' => $cuenta_id
-            ]);
+            // Ajustar saldo según tipo de cuenta
+            if ($cuenta['cta_tipo'] === 'tarjeta_credito') {
+                // Tarjeta de crédito: sumar al saldo utilizado
+                $db->prepare("
+                    UPDATE cuentas
+                    SET cta_saldo = cta_saldo + :monto
+                    WHERE cta_id = :cta_id
+                ")->execute([
+                    ':monto'  => $monto,
+                    ':cta_id' => $cuenta_id
+                ]);
+            } else {
+                // Cuenta normal: restar del saldo
+                $db->prepare("
+                    UPDATE cuentas
+                    SET cta_saldo = cta_saldo - :monto
+                    WHERE cta_id = :cta_id
+                ")->execute([
+                    ':monto'  => $monto,
+                    ':cta_id' => $cuenta_id
+                ]);
+            }
 
             echo json_encode(['codigo' => 1, 'mensaje' => 'Pago registrado correctamente']);
         } catch (Exception $e) {

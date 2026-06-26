@@ -11,7 +11,6 @@ class GastoFijo extends ActiveRecord
         'gf_descripcion',
         'gf_monto_estimado',
         'gf_dia_pago',
-        'gf_cuenta_id',
         'gf_categoria_id',
         'gf_situacion'
     ];
